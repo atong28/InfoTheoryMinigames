@@ -2,6 +2,16 @@ import argparse
 import time
 import os
 import numpy as np
+import math
+
+def entropy(board):
+    entropySum = 0
+    for i in range(board[0].size):
+        for j in range(board[0].size):
+            if board[i,j]==0: continue
+            entropySum += board[i,j] * math.log2(1/board[i,j])
+    return entropySum
+
 
 ################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
@@ -43,6 +53,8 @@ class Battleship():
         self.board.move(int(nextMove[0]), int(nextMove[1]))
         self.counter += 1
         
+        print(self.board)
+        # print(entropy(self.board.probState/sum(sum(self.board.probState))))
         print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
 
         # Check for win
@@ -246,7 +258,7 @@ class Board():
                             self.gameState[ship.x,ship.y:ship.y+ship.size] = 2
                         else:
                             self.guessState[ship.x:ship.x+ship.size,ship.y] = 1
-                            self.gameState[ship.x:ship.x+ship.size,ship.y] = 1
+                            self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
                     else: 
                         if ship.orientation == 0:
                             self.guessState[max(ship.x-1,0):min(ship.x+2,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+ship.size+1,self.BOARD_SIZE)] = 1
@@ -313,4 +325,4 @@ class Ship():
         
 
 if __name__ == '__main__':
-    ship1 = Battleship(False, True, True)
+    ship1 = Battleship(True, True, True)
