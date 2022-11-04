@@ -9,9 +9,8 @@ class Battleship():
         self.board = Board(generateRandom, allowAdjacent)
         
         while True:
-            nextRow = int(input("Enter row:"))
-            nextCol = int(input("Enter col:"))
-            self.board.move(nextRow-1, nextCol-1)
+            nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]:"))
+            self.board.move(int(nextMove[0]), int(nextMove[1]))
 
 ################################################################################
 # BOARD CLASS: Stores the game state with both the actual ship allocation and  #
@@ -169,12 +168,12 @@ class Board():
                             self.gameState[ship.x:ship.x+ship.size,ship.y] = 1
                     else: 
                         if ship.orientation == 0:
-                            self.guessState[ship.x-1:ship.x+2,ship.y-1:ship.y+ship.size+1] = 1
-                            self.gameState[ship.x-1:ship.x+2,ship.y-1:ship.y+ship.size+1] = 1
+                            self.guessState[max(ship.x-1,0):min(ship.x+2,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+ship.size+1,self.BOARD_SIZE)] = 1
+                            self.gameState[max(ship.x-1,0):min(ship.x+2,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+ship.size+1,self.BOARD_SIZE)] = 1
                             self.gameState[ship.x,ship.y:ship.y+ship.size] = 2
                         else:
-                            self.guessState[ship.x-1:ship.x+ship.size+1,ship.y-1:ship.y+2] = 1
-                            self.gameState[ship.x-1:ship.x+ship.size+1,ship.y-1:ship.y+2] = 1
+                            self.guessState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
+                            self.gameState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
                             self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
         # if miss
         else:
@@ -193,7 +192,7 @@ class Ship():
     # size: length of the ship
     # x: The top left x coordinate
     # y: The top left y coordinate
-    # orientation: 0 = horizontal, 1 = vertical
+    # orientation: 0 = horizontal (along y), 1 = vertical (along x)
     ############################################################################
     def __init__(self, size, x, y, orientation):
         self.size = size
@@ -208,16 +207,16 @@ class Ship():
 
     def overlap(self, x, y):
         if self.orientation == 0:
-            return self.x <= x < self.x+self.size
+            return self.y <= y < self.y+self.size and self.x == x
         else:
-            return self.y <= y < self.y+self.size
+            return self.x <= x < self.x+self.size and self.y  == y
     
     def hit(self, x, y):
         if self.orientation == 0:
             self.partsHit[y - self.y] = 1
         else:
             self.partsHit[x - self.x] = 1
-        print(f"Ship {self} hit with remaining alive: {self.partsHit}")
+        print(f"{self} hit with remaining alive: {self.partsHit}")
         if sum(self.partsHit) == self.size:
             self.sunk = True
             print("Ship sunk.")
