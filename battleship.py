@@ -3,6 +3,14 @@ import time
 import os
 import numpy as np
 
+################################################################################
+# BATTLESHIP CLASS: Runs the game.                                             #
+# ---------------------------------------------------------------------------- #
+# INSTANCE VARIABLES:                                                          #
+# - board:   Stores the Board class that the game runs on.                     #
+# - counter: Counts the number of moves the player has made.                   #
+# - win:     True if player has won. Terminates the game.                      #
+################################################################################
 class Battleship():
 
     def __init__(self, generateRandom, allowAdjacent):
@@ -21,8 +29,8 @@ class Battleship():
             self.counter += 1
             
             print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
-            
-            
+
+            # Check for win
             for ship in self.board.ships:
                 if not ship.sunk:
                     return
@@ -53,9 +61,6 @@ class Board():
     BOARD_SIZE = 10
     DEFAULT_SHIP_SIZES = [5,4,3,3,2]
     
-    ############################################################################
-    # Initializes the board.                                                   #
-    ############################################################################
     def __init__(self, generateRandom, allowAdjacent):
 
         self.generateRandom = generateRandom
@@ -112,7 +117,7 @@ class Board():
     # Prints the board state.                                                  #
     ############################################################################
     def __str__(self):
-        string = '''HIDDEN BOARD            GUESS BOARD'''
+        string = '''HIDDEN BOARD            GUESS BOARD             GAME BOARD'''
         for row in range(self.BOARD_SIZE):
             string += "\n"+str(self.hiddenState[row, :]) + " | " + str(self.guessState[row, :]) + " | " + str(self.gameState[row, :])
         return string
@@ -260,4 +265,4 @@ class Ship():
         
 
 if __name__ == '__main__':
-    ship1 = Battleship(True, False)
+    ship1 = Battleship(True, True)
