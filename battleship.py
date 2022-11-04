@@ -248,12 +248,20 @@ class Ship():
     def __str__(self):
         return f'Ship of size {self.size} at ({self.x},{self.y}) facing direction {self.orientation}, sunk: {self.sunk}'
 
+    ############################################################################
+    # Returns true if the provided coordinate is on the ship.                  #
+    ############################################################################
     def overlap(self, x, y):
         if self.orientation == 0:
             return self.y <= y < self.y+self.size and self.x == x
         else:
             return self.x <= x < self.x+self.size and self.y  == y
     
+    ############################################################################
+    # Updates instance variables when it is hit at the given coordinates.      #
+    # Doesn't check whether the x,y are valid. Make sure to precede with       #
+    # the overlap function.                                                    #
+    ############################################################################
     def hit(self, x, y):
         if self.orientation == 0:
             self.partsHit[y - self.y] = 1
