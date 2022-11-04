@@ -13,28 +13,56 @@ import numpy as np
 ################################################################################
 class Battleship():
 
-    def __init__(self, generateRandom, allowAdjacent):
+    def __init__(self, generateRandom, allowAdjacent, manual):
         self.board = Board(generateRandom, allowAdjacent)
         self.counter = 0
         self.win = False
-        
-        while not self.win:
-            self.play()
-            
-        print(f"Congratulations, you won in {self.counter} moves!")
-        
-    def play(self):
-            nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]:"))
-            self.board.move(int(nextMove[0]), int(nextMove[1]))
-            self.counter += 1
-            
-            print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
+        self.autoMove = (4, 4)
+        self.autoResults = np.zeros(100, dtype=int)
+        self.autoRounds = 10000
 
-            # Check for win
-            for ship in self.board.ships:
-                if not ship.sunk:
-                    return
-            self.win = True
+        if manual:
+            while not self.win:
+                self.playManual()
+            print(f"Congratulations, you won in {self.counter} moves!")
+        else:
+            for i in range(self.autoRounds):
+                while not self.win:
+                    self.playAuto()
+                self.autoResults[self.counter] += 1
+                self.board.reset()
+                self.board.generate()
+                self.counter = 0
+                self.win = False
+            print(f"In {self.autoRounds} simulations, here is the distribution of game moves:")
+            print(self.autoResults)
+        
+        
+    def playManual(self):
+        nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]:"))
+        self.board.move(int(nextMove[0]), int(nextMove[1]))
+        self.counter += 1
+        
+        print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
+
+        # Check for win
+        for ship in self.board.ships:
+            if not ship.sunk:
+                return
+        self.win = True
+
+    def playAuto(self):
+        self.board.move(self.autoMove[0],self.autoMove[1])
+        self.counter += 1
+        
+        nextMove = tuple(str(np.argmax(self.board.probState)).zfill(2))
+        self.autoMove = (int(nextMove[0]), int(nextMove[1]))
+
+        # Check for win
+        for ship in self.board.ships:
+            if not ship.sunk:
+                return
+        self.win = True
         
 
 ################################################################################
@@ -70,9 +98,19 @@ class Board():
         if self.generateRandom:
             self.generate()
         else:
-            pass #manual generation
-
-        print(self)
+            for ship in self.DEFAULT_SHIP_SIZES:
+                result = tuple(input(f"Input the coordinates and orientation for ship of size {ship} e.g. [xyo], [12h], [34v]: "))
+                
+                x = int(result[0])
+                y = int(result[1])
+                o = 0
+                if result[2] == 'v': o = 1
+                
+                if o == 0:
+                    self.hiddenState[x,y:y+ship] = 1
+                else:
+                    self.hiddenState[x:x+ship,y] = 1
+                self.ships.append(Ship(ship, x, y, o))
 
     ############################################################################
     # Resets the board state.                                                  #
@@ -91,7 +129,7 @@ class Board():
     # adjacent: True if ships may touch. False if ships cannot.                #
     ############################################################################
     def generate(self):
-        print("Generating a new random board...")
+        # print("Generating a new random board...")
         for shipSize in self.DEFAULT_SHIP_SIZES:
 
             while True:
@@ -111,7 +149,7 @@ class Board():
                         self.hiddenState[x:x+shipSize,y] = 1
                     break
             self.ships.append(Ship(shipSize, x, y, orientation))
-            print("Created: "+str(self.ships[-1]))
+            # print("Created: "+str(self.ships[-1]))
 
     ############################################################################
     # Prints the board state.                                                  #
@@ -177,6 +215,7 @@ class Board():
                     self.hitPriority(x,y-1)
                     self.hitPriority(x+1,y)
                     self.hitPriority(x,y+1)
+                    self.probState[x,y] = 0
                     
     def hitPriority(self, x,y):
         # if out of bounds, return
@@ -194,7 +233,7 @@ class Board():
     def move(self, x, y):
         # if hit
         if self.hiddenState[x,y] == 1:
-            print(f'({x},{y}) hit.')
+            # print(f'({x},{y}) hit.')
             # find ship and do hit
             for ship in self.ships:
                 if ship.overlap(x,y):
@@ -219,13 +258,13 @@ class Board():
                             self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
         # if miss
         else:
-            print(f'({x},{y}) missed.')
+            # print(f'({x},{y}) missed.')
             self.guessState[x,y] = 1
             self.gameState[x,y] = 1
             
         self.evalBoard()  
-        print(self)
-        print(self.probState)
+        # print(self)
+        # print(self.probState)
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
@@ -267,11 +306,11 @@ class Ship():
             self.partsHit[y - self.y] = 1
         else:
             self.partsHit[x - self.x] = 1
-        print(f"{self} hit with remaining alive: {self.partsHit}")
+        # print(f"{self} hit with remaining alive: {self.partsHit}")
         if sum(self.partsHit) == self.size:
             self.sunk = True
-            print("Ship sunk.")
+            # print("Ship sunk.")
         
 
 if __name__ == '__main__':
-    ship1 = Battleship(True, True)
+    ship1 = Battleship(False, True, True)
