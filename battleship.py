@@ -227,15 +227,16 @@ class Board():
         print(self)
         print(self.probState)
 
+################################################################################
+# SHIP CLASS: Stores individual ship object information.                       #
+# ---------------------------------------------------------------------------- #
+# INSTANCE VARIABLES:                                                          #
+# x, y: Coordinates of the top lerft corner of the ship.                       #
+# orientation: 0 = horizontal (along the y-axis), 1 = vertical (along x-axis)  #
+# sunk: True if the ship is fully sunk.                                        #
+# partsHit: An array, 1 if the part of the ship has been hit, 0 otherwise      #
+################################################################################
 class Ship():
-
-    ############################################################################
-    # Initiates the ship class.
-    # size: length of the ship
-    # x: The top left x coordinate
-    # y: The top left y coordinate
-    # orientation: 0 = horizontal (along y), 1 = vertical (along x)
-    ############################################################################
     def __init__(self, size, x, y, orientation):
         self.size = size
         self.x = x
