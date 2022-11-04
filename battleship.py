@@ -7,10 +7,27 @@ class Battleship():
 
     def __init__(self, generateRandom, allowAdjacent):
         self.board = Board(generateRandom, allowAdjacent)
+        self.counter = 0
+        self.win = False
         
-        while True:
+        while not self.win:
+            self.play()
+            
+        print(f"Congratulations, you won in {self.counter} moves!")
+        
+    def play(self):
             nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]:"))
             self.board.move(int(nextMove[0]), int(nextMove[1]))
+            self.counter += 1
+            
+            print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
+            
+            
+            for ship in self.board.ships:
+                if not ship.sunk:
+                    return
+            self.win = True
+        
 
 ################################################################################
 # BOARD CLASS: Stores the game state with both the actual ship allocation and  #
@@ -147,8 +164,28 @@ class Board():
                             else:
                                 self.probState[x:x+shipSize,y] += 1
                             self.probTotal += shipSize
-        # adds weighting to any hit zones
+        # adds weighting to any hit zones, note that any sunken ship will not go through this
+        for x in range(self.BOARD_SIZE):
+            for y in range(self.BOARD_SIZE):
+                if self.gameState[x,y] == 2 and self.guessState[x,y] == 0:
+                    self.hitPriority(x-1,y)
+                    self.hitPriority(x,y-1)
+                    self.hitPriority(x+1,y)
+                    self.hitPriority(x,y+1)
+                    
+    def hitPriority(self, x,y):
+        # if out of bounds, return
+        if x < 0 or x >= self.BOARD_SIZE: return
+        if y < 0 or y >= self.BOARD_SIZE: return
+        
+        # if already ruled out, return
+        if self.guessState[x,y] == 1 or (self.gameState[x,y] == 2 and self.guessState[x,y] == 0): return
+        
+        self.probState[x,y] += 1000
 
+    ############################################################################
+    # Checks at (x,y) to see if a ship is hit.                                 #
+    ############################################################################
     def move(self, x, y):
         # if hit
         if self.hiddenState[x,y] == 1:
