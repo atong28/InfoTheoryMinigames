@@ -1,9 +1,9 @@
-import argparse
-import time
-import os
 import numpy as np
 import math
 
+################################################################################
+# Calculates the entropy of the board probability state.                       #
+################################################################################
 def entropy(board):
     entropySum = 0
     for i in range(board[0].size):
@@ -11,7 +11,6 @@ def entropy(board):
             if board[i,j]==0: continue
             entropySum += board[i,j] * math.log2(1/board[i,j])
     return entropySum
-
 
 ################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
@@ -29,14 +28,20 @@ class Battleship():
         self.win = False
         self.autoMove = (4, 4)
         self.autoResults = np.zeros(100, dtype=int)
+        
+        # modifiable
         self.autoRounds = 10000
 
+        # if manual, just run one round; play moves until win
         if manual:
             while not self.win:
                 self.playManual()
             print(f"Congratulations, you won in {self.counter} moves!")
+            
+        # run and reset after each game
         else:
             for i in range(self.autoRounds):
+                if i % 100 == 0: print(f"Run {i} completed.")
                 while not self.win:
                     self.playAuto()
                 self.autoResults[self.counter] += 1
@@ -44,8 +49,16 @@ class Battleship():
                 self.board.generate()
                 self.counter = 0
                 self.win = False
+            
+            expectedMoves = 0
             print(f"In {self.autoRounds} simulations, here is the distribution of game moves:")
-            print(self.autoResults)
+            for i in range(100):
+                if self.autoResults[i] == 0: continue
+                print(f"{i} moves: {self.autoResults[i]} games")
+                expectedMoves += i * self.autoResults[i] / self.autoRounds
+                
+            print(f"The number of mean moves was {expectedMoves}.")
+                
         
         
     def playManual(self):
@@ -54,6 +67,7 @@ class Battleship():
         self.counter += 1
         
         print(self.board)
+        print(self.board.probState)
         # print(entropy(self.board.probState/sum(sum(self.board.probState))))
         print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
 
@@ -197,61 +211,63 @@ class Board():
         # calculates count given all misses
         for ship in self.ships:
             if ship.sunk: continue
-            shipSize = ship.size
+            ship.size
             for orientation in range(2):
                 if orientation == 0:
                     for x in range(self.BOARD_SIZE):
-                        for y in range(self.BOARD_SIZE - shipSize + 1):
-                            if self.overlaps(x, y, orientation, shipSize, self.guessState, True):
+                        for y in range(self.BOARD_SIZE - ship.size + 1):
+                            # if the ship collides with a miss block or a sunken ship block, it is not a valid location
+                            if self.overlaps(x, y, orientation, ship.size, self.guessState, True):
                                 continue
-                            if orientation == 0:
-                                self.probState[x,y:y+shipSize] += 1
+                            
+                            # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
+                            if sum(self.gameState[x,y:y+ship.size]) > 0:
+                                # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                                self.probState[x,y:y+ship.size] += 50 * sum(self.gameState[x,y:y+ship.size])
+                            # otherwise, add small probability
                             else:
-                                self.probState[x:x+shipSize,y] += 1
-                            self.probTotal += shipSize
+                                self.probState[x,y:y+ship.size] += 1
+                            
                 else:
-                    for x in range(self.BOARD_SIZE - shipSize + 1):
+                    for x in range(self.BOARD_SIZE - ship.size + 1):
                         for y in range(self.BOARD_SIZE):
-                            if self.overlaps(x, y, orientation, shipSize, self.guessState, True):
+                            if self.overlaps(x, y, orientation, ship.size, self.guessState, True):
                                 continue
-                            if orientation == 0:
-                                self.probState[x,y:y+shipSize] += 1
+                            # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
+                            if sum(self.gameState[x:x+ship.size,y]) > 0:
+                                # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                                self.probState[x:x+ship.size,y] += 50 * sum(self.gameState[x:x+ship.size,y])
+                            # otherwise, add small probability
                             else:
-                                self.probState[x:x+shipSize,y] += 1
-                            self.probTotal += shipSize
-        # adds weighting to any hit zones, note that any sunken ship will not go through this
+                                self.probState[x:x+ship.size,y] += 1
+        # removes probability for ships that are already hit but not sunk
         for x in range(self.BOARD_SIZE):
             for y in range(self.BOARD_SIZE):
                 if self.gameState[x,y] == 2 and self.guessState[x,y] == 0:
-                    self.hitPriority(x-1,y)
-                    self.hitPriority(x,y-1)
-                    self.hitPriority(x+1,y)
-                    self.hitPriority(x,y+1)
                     self.probState[x,y] = 0
                     
-    def hitPriority(self, x,y):
-        # if out of bounds, return
-        if x < 0 or x >= self.BOARD_SIZE: return
-        if y < 0 or y >= self.BOARD_SIZE: return
-        
-        # if already ruled out, return
-        if self.guessState[x,y] == 1 or (self.gameState[x,y] == 2 and self.guessState[x,y] == 0): return
-        
-        self.probState[x,y] += 1000
+        self.probTotal = sum(sum(self.probState))
 
     ############################################################################
     # Checks at (x,y) to see if a ship is hit.                                 #
     ############################################################################
     def move(self, x, y):
+        
         # if hit
         if self.hiddenState[x,y] == 1:
-            # print(f'({x},{y}) hit.')
+            
             # find ship and do hit
             for ship in self.ships:
                 if ship.overlap(x,y):
+                    
+                    # update ship hit
                     ship.hit(x,y)
+                    
+                    # guessState should remain 0 for purposes of algorithm
                     if not ship.sunk:
                         self.gameState[x,y] = 2
+                        
+                    # if ship is sunk, update board states depending on allowAdjacent rule
                     elif self.allowAdjacent:
                         if ship.orientation == 0:
                             self.guessState[ship.x,ship.y:ship.y+ship.size] = 1
@@ -268,15 +284,14 @@ class Board():
                             self.guessState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
                             self.gameState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
                             self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
+                            
         # if miss
         else:
-            # print(f'({x},{y}) missed.')
             self.guessState[x,y] = 1
             self.gameState[x,y] = 1
             
-        self.evalBoard()  
-        # print(self)
-        # print(self.probState)
+        # re-evaluate the board in new state
+        self.evalBoard()
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
@@ -325,4 +340,28 @@ class Ship():
         
 
 if __name__ == '__main__':
-    ship1 = Battleship(True, True, True)
+    print("WELCOME TO BATTLESHIP!")
+    
+    # parse random generation rule
+    gen = ""
+    generateRandom = False
+    while (len(gen) != 1) and (gen != "y" and gen != "n"):
+        gen = str.lower(input("Would you like to generate a board randomly? Press Y for random, N for manual generation."))
+    if gen == "y": generateRandom = True
+    
+    # parse allow adjacent rule
+    allowAdj = ""
+    allowAdjacent = False
+    while (len(allowAdj) != 1) and (allowAdj != "y" and allowAdj != "n"):
+        allowAdj = str.lower(input("Would you like to allow ships to touch? Press Y for yes, N for no."))
+    if allowAdj == "y": allowAdjacent = True
+    
+    # parse manual mode rule
+    manual = ""
+    manualMode = False
+    while (len(manual) != 1) and (manual != "y" and manual != "n"):
+        manual = str.lower(input("Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto."))
+    if manual == "y": manualMode = True
+    
+    # run it!
+    ship = Battleship(generateRandom, allowAdjacent, manualMode)
