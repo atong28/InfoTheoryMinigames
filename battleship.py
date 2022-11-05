@@ -33,7 +33,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 100
+        self.autoRounds = 100000
 
         # if manual, just run one round; play moves until win
         if manual:
@@ -87,10 +87,9 @@ class Battleship():
         print(self.board)
         print("Probability matrix:")
         print(self.board.probState)
-        # print(entropy(self.board.probState/sum(sum(self.board.probState))))
         print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
 
-        # Check for win
+        # check for win
         for ship in self.board.ships:
             if not ship.sunk:
                 return
@@ -177,9 +176,7 @@ class Board():
     # adjacent: True if ships may touch. False if ships cannot.                #
     ############################################################################
     def generate(self):
-        # print("Generating a new random board...")
         for shipSize in self.DEFAULT_SHIP_SIZES:
-
             while True:
                 orientation = np.random.randint(2)
                 
@@ -197,7 +194,6 @@ class Board():
                         self.hiddenState[x:x+shipSize,y] = 1
                     break
             self.ships.append(Ship(shipSize, x, y, orientation))
-            # print("Created: "+str(self.ships[-1]))
 
     ############################################################################
     # Prints the board state.                                                  #
@@ -209,13 +205,13 @@ class Board():
         return string
 
     def overlaps(self, x, y, orientation, shipSize, board, allowAdjacent):
-        # Check box with only ship
+        # check box with only ship
         if allowAdjacent:
             if orientation == 0:
                 if sum(board[x,y:y+shipSize]) == 0: return False
             else:
                 if sum(board[x:x+shipSize,y]) == 0: return False
-        # Check box with padding around ship
+        # check box with padding around ship
         else:
             if orientation == 0:
                 if sum(sum(board[max(x-1,0):x+2,max(y-1,0):min(y+shipSize+1, self.BOARD_SIZE)])) == 0: return False
@@ -355,10 +351,8 @@ class Ship():
             self.partsHit[y - self.y] = 1
         else:
             self.partsHit[x - self.x] = 1
-        # print(f"{self} hit with remaining alive: {self.partsHit}")
         if sum(self.partsHit) == self.size:
             self.sunk = True
-            # print("Ship sunk.")
         
 
 if __name__ == '__main__':
