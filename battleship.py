@@ -22,6 +22,9 @@ def entropy(board):
 ################################################################################
 class Battleship():
 
+    ############################################################################
+    # Runs the Battleship game.                                                #
+    ############################################################################
     def __init__(self, generateRandom, allowAdjacent, manual):
         self.board = Board(generateRandom, allowAdjacent)
         self.counter = 0
@@ -30,10 +33,15 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 10000
+        self.autoRounds = 100
 
         # if manual, just run one round; play moves until win
         if manual:
+            print(self.board)
+            print("Probability matrix:")
+            print(self.board.probState)
+            print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
+            
             while not self.win:
                 self.playManual()
             print(f"Congratulations, you won in {self.counter} moves!")
@@ -50,6 +58,7 @@ class Battleship():
                 self.counter = 0
                 self.win = False
             
+            # analyze stats
             expectedMoves = 0
             print(f"In {self.autoRounds} simulations, here is the distribution of game moves:")
             for i in range(100):
@@ -58,15 +67,25 @@ class Battleship():
                 expectedMoves += i * self.autoResults[i] / self.autoRounds
                 
             print(f"The number of mean moves was {expectedMoves}.")
-                
+            
+            # print for google sheets formatting
+            printSheet = ""
+            while (len(printSheet) != 1) and (printSheet != "y" and printSheet != "n"):
+                printSheet = str.lower(input("Would you like to print the list for spreadsheet formatting? Press Y for yes, N for no. First starts at 0. "))
+            if printSheet == "y":
+                for i in range(100):
+                    print(self.autoResults[i])
         
-        
+    ############################################################################
+    # Plays one move in manual mode.                                           #
+    ############################################################################
     def playManual(self):
-        nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]:"))
+        nextMove = tuple(input("Enter row, col [format: xy, where x:[0,9], y:[0,9]]: "))
         self.board.move(int(nextMove[0]), int(nextMove[1]))
         self.counter += 1
         
         print(self.board)
+        print("Probability matrix:")
         print(self.board.probState)
         # print(entropy(self.board.probState/sum(sum(self.board.probState))))
         print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
@@ -77,6 +96,9 @@ class Battleship():
                 return
         self.win = True
 
+    ############################################################################
+    # Plays one move in auto mode.                                             #
+    ############################################################################
     def playAuto(self):
         self.board.move(self.autoMove[0],self.autoMove[1])
         self.counter += 1
@@ -346,21 +368,21 @@ if __name__ == '__main__':
     gen = ""
     generateRandom = False
     while (len(gen) != 1) and (gen != "y" and gen != "n"):
-        gen = str.lower(input("Would you like to generate a board randomly? Press Y for random, N for manual generation."))
+        gen = str.lower(input("Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
     if gen == "y": generateRandom = True
     
     # parse allow adjacent rule
     allowAdj = ""
     allowAdjacent = False
     while (len(allowAdj) != 1) and (allowAdj != "y" and allowAdj != "n"):
-        allowAdj = str.lower(input("Would you like to allow ships to touch? Press Y for yes, N for no."))
+        allowAdj = str.lower(input("Would you like to allow ships to touch? Press Y for yes, N for no. "))
     if allowAdj == "y": allowAdjacent = True
     
     # parse manual mode rule
     manual = ""
     manualMode = False
     while (len(manual) != 1) and (manual != "y" and manual != "n"):
-        manual = str.lower(input("Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto."))
+        manual = str.lower(input("Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
     if manual == "y": manualMode = True
     
     # run it!
