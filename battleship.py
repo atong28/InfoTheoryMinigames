@@ -40,8 +40,8 @@ class Battleship():
     ############################################################################
     # Runs the Battleship game.                                                #
     ############################################################################
-    def __init__(self, generateRandom, allowAdjacent, manual):
-        self.board = Board(generateRandom, allowAdjacent)
+    def __init__(self, generateRandom, manual):
+        self.board = Board(generateRandom)
         self.counter = 0
         self.win = False
         self.autoMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
@@ -158,7 +158,6 @@ class Battleship():
 # - probState:      Higher for more likely spots for ships.                    #
 # - ships:          The array that stores Ship objects.                        #
 # - generateRandom: True if the array is to be generated at random.            #
-# - allowAdjacent:  True if ships are allowed to 'touch'. False if not.        #
 ################################################################################
 class Board():
     BOARD_SIZE = 10
@@ -167,10 +166,9 @@ class Board():
     ############################################################################
     # Initiates a board. Resets first, then generates, and then evaluates.     #
     ############################################################################
-    def __init__(self, generateRandom, allowAdjacent):
+    def __init__(self, generateRandom):
 
         self.generateRandom = generateRandom
-        self.allowAdjacent = allowAdjacent
         self.hitMode = False
 
         self.reset()
@@ -218,7 +216,7 @@ class Board():
                     x = np.random.randint(self.BOARD_SIZE - shipSize + 1)
                     y = np.random.randint(self.BOARD_SIZE)
 
-                if not self.overlaps(x, y, orientation, shipSize, self.hiddenState, self.allowAdjacent):
+                if not self.overlaps(x, y, orientation, shipSize, self.hiddenState):
                     if orientation == 0:
                         self.hiddenState[x,y:y+shipSize] = 1
                     else:
@@ -262,30 +260,23 @@ class Board():
         if self.probTotal == 0: return string
 
         # print the information matrix values, color coded on greyscale of 24 values
-        string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      INFORMATION MATRIX                       '
-        colorMatrix = self.eMatrix / np.amax(self.eMatrix) * 24
+        string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      PROBABILITY MATRIX                       '
+        
+        colorMatrix = self.pMatrix / np.amax(self.pMatrix) * 7
+        print(colorMatrix)
         string += bcolors.RESET
         for i in range(self.BOARD_SIZE):
             string += '\n  '
             for j in range(self.BOARD_SIZE):
-                if int(colorMatrix[i,j]) == 24:
-                    colorMatrix[i,j] -= 1
-                string += f"\033[38;5;{232 + int(colorMatrix[i,j])}m{str(round(self.eMatrix[i,j],3)).ljust(5, '0')} "
+                string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(self.pMatrix[i,j],3)).ljust(5, '0')} "
+                # string += f"\033[38;5;250m{str(round(self.pMatrix[i,j],3)).ljust(5, '0')} "
         return string
 
-    def overlaps(self, x, y, orientation, shipSize, board, allowAdjacent):
-        # check box with only ship
-        if allowAdjacent:
-            if orientation == 0:
-                if sum(board[x,y:y+shipSize]) == 0: return False
-            else:
-                if sum(board[x:x+shipSize,y]) == 0: return False
-        # check box with padding around ship
+    def overlaps(self, x, y, orientation, shipSize, board):
+        if orientation == 0:
+            if sum(board[x,y:y+shipSize]) == 0: return False
         else:
-            if orientation == 0:
-                if sum(sum(board[max(x-1,0):x+2,max(y-1,0):min(y+shipSize+1, self.BOARD_SIZE)])) == 0: return False
-            else:
-                if sum(sum(board[max(x-1,0):min(x+shipSize+1, self.BOARD_SIZE),max(y-1,0):y+2])) == 0: return False
+            if sum(board[x:x+shipSize,y]) == 0: return False
         return True
 
     ############################################################################
@@ -306,7 +297,7 @@ class Board():
                     for x in range(self.BOARD_SIZE):
                         for y in range(self.BOARD_SIZE - ship.size + 1):
                             # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                            if self.overlaps(x, y, orientation, ship.size, self.guessState, True):
+                            if self.overlaps(x, y, orientation, ship.size, self.guessState):
                                 continue
                             
                             # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
@@ -321,7 +312,7 @@ class Board():
                 else:
                     for x in range(self.BOARD_SIZE - ship.size + 1):
                         for y in range(self.BOARD_SIZE):
-                            if self.overlaps(x, y, orientation, ship.size, self.guessState, True):
+                            if self.overlaps(x, y, orientation, ship.size, self.guessState):
                                 continue
                             # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
                             if sum(self.gameState[x:x+ship.size,y]) > 0:
@@ -343,8 +334,8 @@ class Board():
         if self.probTotal == 0:
             self.eMatrix = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=float)
             return
-        pMatrix = self.probState / self.probTotal
-        self.eMatrix = entropy(pMatrix)
+        self.pMatrix = self.probState / self.probTotal
+        self.eMatrix = entropy(self.pMatrix)
 
     ############################################################################
     # Checks at (x,y) to see if a ship is hit.                                 #
@@ -364,24 +355,15 @@ class Board():
                     # guessState should remain 0 for purposes of algorithm
                     if not ship.sunk:
                         self.gameState[x,y] = 2
+                        continue
                         
-                    # if ship is sunk, update board states depending on allowAdjacent rule
-                    elif self.allowAdjacent:
-                        if ship.orientation == 0:
-                            self.guessState[ship.x,ship.y:ship.y+ship.size] = 1
-                            self.gameState[ship.x,ship.y:ship.y+ship.size] = 2
-                        else:
-                            self.guessState[ship.x:ship.x+ship.size,ship.y] = 1
-                            self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
-                    else: 
-                        if ship.orientation == 0:
-                            self.guessState[max(ship.x-1,0):min(ship.x+2,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+ship.size+1,self.BOARD_SIZE)] = 1
-                            self.gameState[max(ship.x-1,0):min(ship.x+2,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+ship.size+1,self.BOARD_SIZE)] = 1
-                            self.gameState[ship.x,ship.y:ship.y+ship.size] = 2
-                        else:
-                            self.guessState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
-                            self.gameState[max(ship.x-1,0):min(ship.x+ship.size+1,self.BOARD_SIZE),max(ship.y-1,0):min(ship.y+2,self.BOARD_SIZE)] = 1
-                            self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
+                    # if ship is sunk, update board states
+                    if ship.orientation == 0:
+                        self.guessState[ship.x,ship.y:ship.y+ship.size] = 1
+                        self.gameState[ship.x,ship.y:ship.y+ship.size] = 2
+                    else:
+                        self.guessState[ship.x:ship.x+ship.size,ship.y] = 1
+                        self.gameState[ship.x:ship.x+ship.size,ship.y] = 2
                             
         # if miss
         else:
@@ -446,13 +428,6 @@ if __name__ == '__main__':
         gen = str.lower(input(f"{bcolors.CYAN}Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
     if gen == "y": generateRandom = True
     
-    # parse allow adjacent rule
-    allowAdj = ""
-    allowAdjacent = False
-    while (len(allowAdj) != 1) and (allowAdj != "y" and allowAdj != "n"):
-        allowAdj = str.lower(input(f"{bcolors.CYAN}Would you like to allow ships to touch? Press Y for yes, N for no. "))
-    if allowAdj == "y": allowAdjacent = True
-    
     # parse manual mode rule
     manual = ""
     manualMode = False
@@ -461,4 +436,4 @@ if __name__ == '__main__':
     if manual == "y": manualMode = True
     
     # run it!
-    ship = Battleship(generateRandom, allowAdjacent, manualMode)
+    ship = Battleship(generateRandom, manualMode)
