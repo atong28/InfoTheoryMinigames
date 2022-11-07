@@ -269,7 +269,6 @@ class Board():
             string += '\n  '
             for j in range(self.BOARD_SIZE):
                 string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(self.pMatrix[i,j],3)).ljust(5, '0')} "
-                # string += f"\033[38;5;250m{str(round(self.pMatrix[i,j],3)).ljust(5, '0')} "
         return string
 
     def overlaps(self, x, y, orientation, shipSize, board):
