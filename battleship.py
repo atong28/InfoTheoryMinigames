@@ -1,16 +1,31 @@
 import numpy as np
+from numpy import unravel_index
 import math
+
+################################################################################
+# Text color presets.                                                          #
+################################################################################
+class bcolors:
+    RED = '\u001b[31;1m'
+    BLUE = '\u001b[34;1m'
+    YELLOW = '\u001b[33;1m'
+    GREEN = '\u001b[32;1m'
+    MAGENTA = '\u001b[35;1m'
+    CYAN = '\u001b[36;1m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    RESET = '\u001b[0m'
 
 ################################################################################
 # Calculates the entropy of the board probability state.                       #
 ################################################################################
 def entropy(board):
-    entropySum = 0
+    infoBoard = np.zeros((board[0].size, board[0].size), dtype=float)
     for i in range(board[0].size):
         for j in range(board[0].size):
             if board[i,j]==0: continue
-            entropySum += board[i,j] * math.log2(1/board[i,j])
-    return entropySum
+            infoBoard[i,j] = board[i,j] * math.log2(1/board[i,j])
+    return infoBoard
 
 ################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
@@ -29,7 +44,7 @@ class Battleship():
         self.board = Board(generateRandom, allowAdjacent)
         self.counter = 0
         self.win = False
-        self.autoMove = (4, 4)
+        self.autoMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
@@ -37,11 +52,18 @@ class Battleship():
 
         # if manual, just run one round; play moves until win
         if manual:
+
+            # print information
             print(self.board)
-            print("Probability matrix:")
-            print(self.board.probState)
-            print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
-            
+
+            if self.board.hitMode:
+                print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE: {sum(sum(self.board.eMatrix))} expected bits till end.")         
+            else:
+                print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE: {sum(sum(self.board.eMatrix))} expected bits till game completion.")   
+
+            print(f'Next best move at ({self.autoMove[0]},{self.autoMove[1]}), reducing by {self.board.eMatrix[int(self.autoMove[0]),int(self.autoMove[1])]} bits')
+
+            # launch!
             while not self.win:
                 self.playManual()
             print(f"Congratulations, you won in {self.counter} moves!")
@@ -84,10 +106,16 @@ class Battleship():
         self.board.move(int(nextMove[0]), int(nextMove[1]))
         self.counter += 1
         
+        # print information
         print(self.board)
-        print("Probability matrix:")
-        print(self.board.probState)
-        print(f'Next best move at {str(np.argmax(self.board.probState)).zfill(2)}')
+
+        if self.board.hitMode:
+            print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE: {sum(sum(self.board.eMatrix))} expected bits till end.")         
+        else:
+            print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE: {sum(sum(self.board.eMatrix))} expected bits till game completion.")   
+
+        bestMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
+        print(f'Next best move at ({bestMove[0]},{bestMove[1]}), reducing by {self.board.eMatrix[int(bestMove[0]),int(bestMove[1])]} bits')
 
         # check for win
         for ship in self.board.ships:
@@ -136,10 +164,14 @@ class Board():
     BOARD_SIZE = 10
     DEFAULT_SHIP_SIZES = [5,4,3,3,2]
     
+    ############################################################################
+    # Initiates a board. Resets first, then generates, and then evaluates.     #
+    ############################################################################
     def __init__(self, generateRandom, allowAdjacent):
 
         self.generateRandom = generateRandom
         self.allowAdjacent = allowAdjacent
+        self.hitMode = False
 
         self.reset()
         if self.generateRandom:
@@ -158,6 +190,7 @@ class Board():
                 else:
                     self.hiddenState[x:x+ship,y] = 1
                 self.ships.append(Ship(ship, x, y, o))
+        self.evalBoard()
 
     ############################################################################
     # Resets the board state.                                                  #
@@ -168,8 +201,6 @@ class Board():
         self.guessState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
         self.gameState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
         self.ships = []
-        self.evalBoard()
-        
 
     ############################################################################
     # Generates an orientation of ships by random. Only used after a reset.    #
@@ -196,12 +227,50 @@ class Board():
             self.ships.append(Ship(shipSize, x, y, orientation))
 
     ############################################################################
-    # Prints the board state.                                                  #
+    # String representation of the board state.                                #
     ############################################################################
     def __str__(self):
-        string = '''HIDDEN BOARD            GUESS BOARD             GAME BOARD'''
+
+        # board values
+        string = f'''{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}    HIDDEN BOARD          GUESS BOARD           GAME BOARD     '''
         for row in range(self.BOARD_SIZE):
-            string += "\n"+str(self.hiddenState[row, :]) + " | " + str(self.guessState[row, :]) + " | " + str(self.gameState[row, :])
+            string += f"{bcolors.RESET}\n"
+            for i in range(self.BOARD_SIZE):
+                match self.hiddenState[row,i]:
+                    case 0:
+                        string += f"{bcolors.BLUE}0 "
+                    case 1:
+                        string += f"{bcolors.RED}1 "
+            string += f"{bcolors.RESET}| "
+            for i in range(self.BOARD_SIZE):
+                match self.guessState[row,i]:
+                    case 0:
+                        string += f"{bcolors.BLUE}0 "
+                    case 1:
+                        string += f"{bcolors.RED}1 "
+            string += f"{bcolors.RESET}| "
+            for i in range(self.BOARD_SIZE):
+                match self.gameState[row,i]:
+                    case 0:
+                        string += f"{bcolors.BLUE}0 "
+                    case 1:
+                        string += f"{bcolors.RED}1 "
+                    case 2:
+                        string += f"{bcolors.GREEN}2 "
+        
+        # if at the end of the game, do not print!
+        if self.probTotal == 0: return string
+
+        # print the information matrix values, color coded on greyscale of 24 values
+        string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      INFORMATION MATRIX                       '
+        colorMatrix = self.eMatrix / np.amax(self.eMatrix) * 24
+        string += bcolors.RESET
+        for i in range(self.BOARD_SIZE):
+            string += '\n  '
+            for j in range(self.BOARD_SIZE):
+                if int(colorMatrix[i,j]) == 24:
+                    colorMatrix[i,j] -= 1
+                string += f"\033[38;5;{232 + int(colorMatrix[i,j])}m{str(round(self.eMatrix[i,j],3)).ljust(5, '0')} "
         return string
 
     def overlaps(self, x, y, orientation, shipSize, board, allowAdjacent):
@@ -226,6 +295,8 @@ class Board():
         self.probState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
         self.probTotal = 0
 
+        self.hitMode = False
+
         # calculates count given all misses
         for ship in self.ships:
             if ship.sunk: continue
@@ -241,6 +312,7 @@ class Board():
                             # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
                             if sum(self.gameState[x,y:y+ship.size]) > 0:
                                 # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                                self.hitMode = True
                                 self.probState[x,y:y+ship.size] += 50 * sum(self.gameState[x,y:y+ship.size])
                             # otherwise, add small probability
                             else:
@@ -254,17 +326,25 @@ class Board():
                             # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
                             if sum(self.gameState[x:x+ship.size,y]) > 0:
                                 # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                                self.hitMode = True
                                 self.probState[x:x+ship.size,y] += 50 * sum(self.gameState[x:x+ship.size,y])
                             # otherwise, add small probability
                             else:
                                 self.probState[x:x+ship.size,y] += 1
-        # removes probability for ships that are already hit but not sunk
+        # removes probability for ships that are already hit but not sunk, and if in hitMode, sets nonnear values to 0
         for x in range(self.BOARD_SIZE):
             for y in range(self.BOARD_SIZE):
+                if self.hitMode and self.probState[x,y] < 100:
+                    self.probState[x,y] = 0
                 if self.gameState[x,y] == 2 and self.guessState[x,y] == 0:
                     self.probState[x,y] = 0
                     
         self.probTotal = sum(sum(self.probState))
+        if self.probTotal == 0:
+            self.eMatrix = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=float)
+            return
+        pMatrix = self.probState / self.probTotal
+        self.eMatrix = entropy(pMatrix)
 
     ############################################################################
     # Checks at (x,y) to see if a ship is hit.                                 #
@@ -356,27 +436,28 @@ class Ship():
         
 
 if __name__ == '__main__':
-    print("WELCOME TO BATTLESHIP!")
+    print(f"{bcolors.MAGENTA+bcolors.BOLD+bcolors.UNDERLINE}                                   WELCOME TO BATTLESHIP!")
+    print(f"{bcolors.RESET+bcolors.MAGENTA+bcolors.BOLD}=========================================================================================")
     
     # parse random generation rule
     gen = ""
     generateRandom = False
     while (len(gen) != 1) and (gen != "y" and gen != "n"):
-        gen = str.lower(input("Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
+        gen = str.lower(input(f"{bcolors.CYAN}Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
     if gen == "y": generateRandom = True
     
     # parse allow adjacent rule
     allowAdj = ""
     allowAdjacent = False
     while (len(allowAdj) != 1) and (allowAdj != "y" and allowAdj != "n"):
-        allowAdj = str.lower(input("Would you like to allow ships to touch? Press Y for yes, N for no. "))
+        allowAdj = str.lower(input(f"{bcolors.CYAN}Would you like to allow ships to touch? Press Y for yes, N for no. "))
     if allowAdj == "y": allowAdjacent = True
     
     # parse manual mode rule
     manual = ""
     manualMode = False
     while (len(manual) != 1) and (manual != "y" and manual != "n"):
-        manual = str.lower(input("Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
+        manual = str.lower(input(f"{bcolors.CYAN}Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
     if manual == "y": manualMode = True
     
     # run it!
