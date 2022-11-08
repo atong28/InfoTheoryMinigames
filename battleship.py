@@ -48,7 +48,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 100000
+        self.autoRounds = 10
 
         # if manual, just run one round; play moves until win
         if manual:
@@ -71,7 +71,7 @@ class Battleship():
         # run and reset after each game
         else:
             for i in range(self.autoRounds):
-                if i % 100 == 0: print(f"Run {i} completed.")
+                if i % 100 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
                 while not self.win:
                     self.playAuto()
                 self.autoResults[self.counter] += 1
@@ -82,18 +82,18 @@ class Battleship():
             
             # analyze stats
             expectedMoves = 0
-            print(f"In {self.autoRounds} simulations, here is the distribution of game moves:")
+            print(f"{bcolors.BLUE + bcolors.BOLD}In {self.autoRounds} simulations, here is the distribution of game moves:")
             for i in range(100):
                 if self.autoResults[i] == 0: continue
-                print(f"{i} moves: {self.autoResults[i]} games")
+                print(f"{bcolors.GREEN}{i} moves: {self.autoResults[i]} game(s)")
                 expectedMoves += i * self.autoResults[i] / self.autoRounds
                 
-            print(f"The number of mean moves was {expectedMoves}.")
+            print(f"{bcolors.BLUE + bcolors.BOLD}The number of mean moves was {bcolors.YELLOW}{expectedMoves}.")
             
             # print for google sheets formatting
             printSheet = ""
             while (len(printSheet) != 1) and (printSheet != "y" and printSheet != "n"):
-                printSheet = str.lower(input("Would you like to print the list for spreadsheet formatting? Press Y for yes, N for no. First starts at 0. "))
+                printSheet = str.lower(input(f"{bcolors.BLUE + bcolors.BOLD}Would you like to print the list for spreadsheet formatting? Press Y for yes, N for no. First starts at 0. "))
             if printSheet == "y":
                 for i in range(100):
                     print(self.autoResults[i])
