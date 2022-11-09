@@ -17,17 +17,6 @@ class bcolors:
     RESET = '\u001b[0m'
 
 ################################################################################
-# Calculates the entropy of the board probability state.                       #
-################################################################################
-def entropy(board):
-    infoBoard = np.zeros((board[0].size, board[0].size), dtype=float)
-    for i in range(board[0].size):
-        for j in range(board[0].size):
-            if board[i,j]==0: continue
-            infoBoard[i,j] = board[i,j] * math.log2(1/board[i,j])
-    return infoBoard
-
-################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
 # ---------------------------------------------------------------------------- #
 # INSTANCE VARIABLES:                                                          #
@@ -57,11 +46,11 @@ class Battleship():
             print(self.board)
 
             if self.board.hitMode:
-                print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE: {sum(sum(self.board.eMatrix))} expected bits till end.")         
+                print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE")         
             else:
-                print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE: {sum(sum(self.board.eMatrix))} expected bits till game completion.")   
+                print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE")   
 
-            print(f'Next best move at ({self.autoMove[0]},{self.autoMove[1]}), reducing by {self.board.eMatrix[int(self.autoMove[0]),int(self.autoMove[1])]} bits')
+            print(f'Next best move at ({self.autoMove[0]},{self.autoMove[1]}).')
 
             # launch!
             while not self.win:
@@ -110,12 +99,12 @@ class Battleship():
         print(self.board)
 
         if self.board.hitMode:
-            print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE: {sum(sum(self.board.eMatrix))} expected bits till end.")         
+            print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE")         
         else:
-            print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE: {sum(sum(self.board.eMatrix))} expected bits till game completion.")   
+            print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE")   
 
         bestMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
-        print(f'Next best move at ({bestMove[0]},{bestMove[1]}), reducing by {self.board.eMatrix[int(bestMove[0]),int(bestMove[1])]} bits')
+        print(f'Next best move at ({bestMove[0]},{bestMove[1]}).')
 
         # check for win
         for ship in self.board.ships:
@@ -263,7 +252,6 @@ class Board():
         string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      PROBABILITY MATRIX                       '
         
         colorMatrix = self.pMatrix / np.amax(self.pMatrix) * 7
-        print(colorMatrix)
         string += bcolors.RESET
         for i in range(self.BOARD_SIZE):
             string += '\n  '
@@ -331,10 +319,8 @@ class Board():
                     
         self.probTotal = sum(sum(self.probState))
         if self.probTotal == 0:
-            self.eMatrix = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=float)
             return
         self.pMatrix = self.probState / self.probTotal
-        self.eMatrix = entropy(self.pMatrix)
 
     ############################################################################
     # Checks at (x,y) to see if a ship is hit.                                 #
