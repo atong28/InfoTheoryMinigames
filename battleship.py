@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import unravel_index
-import math
 
 ################################################################################
 # Text color presets.                                                          #
@@ -398,7 +397,9 @@ class Ship():
             self.partsHit[x - self.x] = 1
         if sum(self.partsHit) == self.size:
             self.sunk = True
-        
+
+def run():
+    Battleship(generateRandom, manualMode)
 
 if __name__ == '__main__':
     print(f"{bcolors.MAGENTA+bcolors.BOLD+bcolors.UNDERLINE}                                   WELCOME TO BATTLESHIP!")
@@ -419,4 +420,4 @@ if __name__ == '__main__':
     if manual == "y": manualMode = True
     
     # run it!
-    ship = Battleship(generateRandom, manualMode)
+    run()
