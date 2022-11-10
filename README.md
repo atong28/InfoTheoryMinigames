@@ -26,8 +26,3 @@ This is the most important part. For the purposes of this algorithm, we wish to 
 Once we hit a ship, we should seek to sink the entire ship. Then, the nearest points are the most valuable, the 4 points in each direction. How should we weight this? There should certainly be greater weights to the left and right of a ship IF there has been 2 or more hits in a row. In other words, once we establish a line of ships, we believe that ship will keep extending until it is sunk. What I instead did was a multiplier to the previous part. Instead of adding 1 for every single ship layout, if the ship overlaps n points, we add 100n points to each point. In other words, if a possible 4-large ship overlays 2 known points hit, then we add 200 points to each point that the theoretical ship covers! We'll iterate through this to solve.
 
 Once this part is evaluated, we make sure every single point hit but not sunk has a probability 0 so we don't produce repeated moves. Evaluating the board state is now done!
-
-## Battleship To-Do
-
-- Analyze the entropy per run.
-- Create multithreading Battleship instances to run simulations faster.

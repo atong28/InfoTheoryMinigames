@@ -46,9 +46,11 @@ class Battleship():
             print(self.board)
 
             if self.board.hitMode:
-                print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE: Next best move at ({self.autoMove[0]},{self.autoMove[1]}).")         
+                print(f"{bcolors.BOLD + bcolors.GREEN}HIT MODE")         
             else:
-                print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE: Next best move at ({self.autoMove[0]},{self.autoMove[1]}).")   
+                print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE")   
+
+            print(f'Next best move at ({self.autoMove[0]},{self.autoMove[1]}).')
 
             # launch!
             while not self.win:
