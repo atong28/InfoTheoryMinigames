@@ -1,12 +1,12 @@
-f = open('wikipedia-english-list.txt', 'r')
-content = f.read()
+class Hangman():
 
-def splitText(entry):
-    result = entry.split(" ")
-    return (result[0], int(result[1]))
+    def __init__(self, secretWord):
+        self.secretWord = secretWord
+        self.counter = 0
 
-wordList = list(map(splitText, content.splitlines()))
-print(len(wordList))
-sum = 0
-for word in wordList:
-    if word[0] == "dr": print("Found")
+    def guess(char):
+        pass
+
+if __name__ == '__main__':
+
+    game = Hangman()
