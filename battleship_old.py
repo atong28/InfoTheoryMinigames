@@ -37,7 +37,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 10
+        self.autoRounds = 1000
 
         # if manual, just run one round; play moves until win
         if manual:

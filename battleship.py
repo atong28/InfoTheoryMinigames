@@ -36,7 +36,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 10
+        self.autoRounds = 50000
 
         # if manual, just run one round; play moves until win
         if manual:
@@ -408,16 +408,17 @@ if __name__ == '__main__':
     # parse random generation rule
     gen = ""
     generateRandom = False
+    manualMode = True
     while (len(gen) != 1) and (gen != "y" and gen != "n"):
         gen = str.lower(input(f"{bcolors.CYAN}Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
-    if gen == "y": generateRandom = True
+    if gen == "y": 
+        generateRandom = True
     
-    # parse manual mode rule
-    manual = ""
-    manualMode = False
-    while (len(manual) != 1) and (manual != "y" and manual != "n"):
-        manual = str.lower(input(f"{bcolors.CYAN}Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
-    if manual == "y": manualMode = True
+        # parse manual mode rule
+        manual = ""
+        while (len(manual) != 1) and (manual != "y" and manual != "n"):
+            manual = str.lower(input(f"{bcolors.CYAN}Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
+        if manual == "n": manualMode = False
     
     # run it!
     run()
