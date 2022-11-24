@@ -275,14 +275,12 @@ class Board():
         # calculates count given all misses
         for ship in self.ships:
             if ship.sunk: continue
-            ship.size
             for orientation in range(2):
                 if orientation == 0:
                     for x in range(self.BOARD_SIZE):
                         for y in range(self.BOARD_SIZE - ship.size + 1):
                             # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                            if self.overlaps(x, y, orientation, ship.size, self.guessState):
-                                continue
+                            if self.overlaps(x, y, orientation, ship.size, self.guessState): continue
                             
                             # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
                             if sum(self.gameState[x,y:y+ship.size]) > 0:
