@@ -16,6 +16,71 @@ class bcolors:
     RESET = '\u001b[0m'
 
 ################################################################################
+# Evaluates the guess probability state.                                       #
+################################################################################
+def evalBoard(game, gameState, guessState):
+    probState = np.zeros((Board.BOARD_SIZE, Board.BOARD_SIZE), dtype=int)
+    probTotal = 0
+
+    game.hitMode = False
+
+    # calculates count given all misses
+    for ship in game.ships:
+        if ship.sunk: continue
+
+        # test for all horizontal
+        orientation = 0
+        for x in range(Board.BOARD_SIZE):
+            for y in range(Board.BOARD_SIZE - ship.size + 1):
+                # if the ship collides with a miss block or a sunken ship block, it is not a valid location
+                if overlaps(x, y, orientation, ship.size, guessState): continue
+                
+                # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
+                if sum(gameState[x,y:y+ship.size]) > 0:
+                    # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                    game.hitMode = True
+                    probState[x,y:y+ship.size] += 50 * (sum(gameState[x,y:y+ship.size]) ** 2)
+                # otherwise, add small probability
+                else:
+                    probState[x,y:y+ship.size] += 1
+        
+        # test for all vertical
+        orientation = 1
+        for x in range(Board.BOARD_SIZE - ship.size + 1):
+            for y in range(Board.BOARD_SIZE):
+                if overlaps(x, y, orientation, ship.size, guessState): continue
+                # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
+                if sum(gameState[x:x+ship.size,y]) > 0:
+                    # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
+                    game.hitMode = True
+                    probState[x:x+ship.size,y] += 50 * (sum(gameState[x:x+ship.size,y]) ** 2)
+                # otherwise, add small probability
+                else:
+                    probState[x:x+ship.size,y] += 1
+
+    # removes probability for ships that are already hit but not sunk, and if in hitMode, sets nonnear values to 0
+    for x in range(Board.BOARD_SIZE):
+        for y in range(Board.BOARD_SIZE):
+            if game.hitMode and probState[x,y] < 100:
+                probState[x,y] = 0
+            if gameState[x,y] == 2 and guessState[x,y] == 0:
+                probState[x,y] = 0
+                
+    probTotal = sum(sum(probState))
+
+    return probState, probTotal
+
+################################################################################
+# Tests if a ship overlaps a given board.                                      #
+################################################################################
+def overlaps(x, y, orientation, shipSize, board):
+    if orientation == 0:
+        if sum(board[x,y:y+shipSize]) == 0: return False
+    else:
+        if sum(board[x:x+shipSize,y]) == 0: return False
+    return True
+
+################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
 # ---------------------------------------------------------------------------- #
 # INSTANCE VARIABLES:                                                          #
@@ -174,7 +239,7 @@ class Board():
                 else:
                     self.hiddenState[x:x+ship,y] = 1
                 self.ships.append(Ship(ship, x, y, o))
-        self.evalBoard()
+        self.probState, self.probTotal = evalBoard(self, self.gameState, self.guessState)
 
     ############################################################################
     # Resets the board state.                                                  #
@@ -202,7 +267,7 @@ class Board():
                     x = np.random.randint(self.BOARD_SIZE - shipSize + 1)
                     y = np.random.randint(self.BOARD_SIZE)
 
-                if not self.overlaps(x, y, orientation, shipSize, self.hiddenState):
+                if not overlaps(x, y, orientation, shipSize, self.hiddenState):
                     if orientation == 0:
                         self.hiddenState[x,y:y+shipSize] = 1
                     else:
@@ -248,76 +313,15 @@ class Board():
         # print the information matrix values, color coded on greyscale of 24 values
         string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      PROBABILITY MATRIX                       '
         
-        colorMatrix = self.pMatrix / np.amax(self.pMatrix) * 7
+        pMatrix = self.probState / self.probTotal
+
+        colorMatrix = pMatrix / np.amax(pMatrix) * 7
         string += bcolors.RESET
         for i in range(self.BOARD_SIZE):
             string += '\n  '
             for j in range(self.BOARD_SIZE):
-                string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(self.pMatrix[i,j],3)).ljust(5, '0')} "
+                string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(pMatrix[i,j],3)).ljust(5, '0')} "
         return string
-
-    def overlaps(self, x, y, orientation, shipSize, board):
-        if orientation == 0:
-            if sum(board[x,y:y+shipSize]) == 0: return False
-        else:
-            if sum(board[x:x+shipSize,y]) == 0: return False
-        return True
-
-    ############################################################################
-    # Evaluates the guess probability state.                                   #
-    ############################################################################
-    def evalBoard(self):
-        self.probState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
-        self.probTotal = 0
-
-        self.hitMode = False
-
-        # calculates count given all misses
-        for ship in self.ships:
-            if ship.sunk: continue
-
-            # test for all horizontal
-            orientation = 0
-            for x in range(self.BOARD_SIZE):
-                for y in range(self.BOARD_SIZE - ship.size + 1):
-                    # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                    if self.overlaps(x, y, orientation, ship.size, self.guessState): continue
-                    
-                    # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
-                    if sum(self.gameState[x,y:y+ship.size]) > 0:
-                        # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
-                        self.hitMode = True
-                        self.probState[x,y:y+ship.size] += 50 * sum(self.gameState[x,y:y+ship.size])
-                    # otherwise, add small probability
-                    else:
-                        self.probState[x,y:y+ship.size] += 1
-            
-            # test for all vertical
-            orientation = 1
-            for x in range(self.BOARD_SIZE - ship.size + 1):
-                for y in range(self.BOARD_SIZE):
-                    if self.overlaps(x, y, orientation, ship.size, self.guessState):
-                        continue
-                    # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
-                    if sum(self.gameState[x:x+ship.size,y]) > 0:
-                        # add probability given how many hit points the ship traverses over (1 hit point, sum = 2; 2 hit point, sum = 4)
-                        self.hitMode = True
-                        self.probState[x:x+ship.size,y] += 50 * sum(self.gameState[x:x+ship.size,y])
-                    # otherwise, add small probability
-                    else:
-                        self.probState[x:x+ship.size,y] += 1
-        # removes probability for ships that are already hit but not sunk, and if in hitMode, sets nonnear values to 0
-        for x in range(self.BOARD_SIZE):
-            for y in range(self.BOARD_SIZE):
-                if self.hitMode and self.probState[x,y] < 100:
-                    self.probState[x,y] = 0
-                if self.gameState[x,y] == 2 and self.guessState[x,y] == 0:
-                    self.probState[x,y] = 0
-                    
-        self.probTotal = sum(sum(self.probState))
-        if self.probTotal == 0:
-            return
-        self.pMatrix = self.probState / self.probTotal
 
     ############################################################################
     # Checks at (x,y) to see if a ship is hit.                                 #
@@ -353,7 +357,7 @@ class Board():
             self.gameState[x,y] = 1
             
         # re-evaluate the board in new state
-        self.evalBoard()
+        self.probState, self.probTotal = evalBoard(self, self.gameState, self.guessState)
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
@@ -399,7 +403,7 @@ class Ship():
             self.sunk = True
 
 def run():
-    Battleship(generateRandom, manualMode)
+    game = Battleship(generateRandom, manualMode)
 
 if __name__ == '__main__':
     print(f"{bcolors.MAGENTA+bcolors.BOLD+bcolors.UNDERLINE}                                   WELCOME TO BATTLESHIP!")
