@@ -93,7 +93,7 @@ class Battleship():
     ############################################################################
     # Runs the Battleship game.                                                #
     ############################################################################
-    def __init__(self, generateRandom, manual):
+    def __init__(self, generateRandom, manual, games=1):
         self.board = Board(generateRandom)
         self.counter = 0
         self.win = False
@@ -101,7 +101,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype=int)
         
         # modifiable
-        self.autoRounds = 1000000
+        self.autoRounds = games
 
         # if manual, just run one round; play moves until win
         if manual:
@@ -402,8 +402,8 @@ class Ship():
         if sum(self.partsHit) == self.size:
             self.sunk = True
 
-def run():
-    game = Battleship(generateRandom, manualMode)
+def run(numRouds):
+    game = Battleship(generateRandom, manualMode, numRounds)
 
 if __name__ == '__main__':
     print(f"{bcolors.MAGENTA+bcolors.BOLD+bcolors.UNDERLINE}                                   WELCOME TO BATTLESHIP!")
@@ -413,6 +413,7 @@ if __name__ == '__main__':
     gen = ""
     generateRandom = False
     manualMode = True
+    numRounds = 1
     while (len(gen) != 1) and (gen != "y" and gen != "n"):
         gen = str.lower(input(f"{bcolors.CYAN}Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
     if gen == "y": 
@@ -422,7 +423,14 @@ if __name__ == '__main__':
         manual = ""
         while (len(manual) != 1) and (manual != "y" and manual != "n"):
             manual = str.lower(input(f"{bcolors.CYAN}Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
-        if manual == "n": manualMode = False
-    
+        if manual == "n": 
+            manualMode = False
+            # find number
+            while True:
+                try:
+                    numRounds = int(input(f"{bcolors.CYAN}How many rounds would you like to run? "))
+                finally:
+                    break
+
     # run it!
-    run()
+    run(numRounds)

@@ -187,7 +187,7 @@ class Battleship():
     ############################################################################
     # Runs the Battleship game.                                                #
     ############################################################################
-    def __init__(self, generateRandom, manual):
+    def __init__(self, generateRandom, manual, numRounds):
         self.board = Board(generateRandom)
         self.counter = 0
         self.win = False
@@ -195,7 +195,7 @@ class Battleship():
         self.autoResults = np.zeros(100, dtype='int64')
         
         # modifiable
-        self.autoRounds = 100
+        self.autoRounds = numRounds
 
         # if manual, just run one round; play moves until win
         if manual:
@@ -216,7 +216,7 @@ class Battleship():
         # run and reset after each game
         else:
             for i in range(self.autoRounds):
-                if i % 1 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
+                if i % 10 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
                 while not self.win:
                     self.playAuto()
                 self.autoResults[self.counter] += 1
@@ -502,9 +502,6 @@ class Ship():
         if sum(self.partsHit) == self.size:
             self.sunk = True
 
-def run():
-    game = Battleship(generateRandom, manualMode)
-
 if __name__ == '__main__':
     print(f"{bcolors.MAGENTA+bcolors.BOLD+bcolors.UNDERLINE}                                   WELCOME TO BATTLESHIP!")
     print(f"{bcolors.RESET+bcolors.MAGENTA+bcolors.BOLD}=========================================================================================")
@@ -522,7 +519,14 @@ if __name__ == '__main__':
         manual = ""
         while (len(manual) != 1) and (manual != "y" and manual != "n"):
             manual = str.lower(input(f"{bcolors.CYAN}Would you like run the mode manually or automatically run for more results? Press Y for manual, N for auto. "))
-        if manual == "n": manualMode = False
-    
+        if manual == "n":
+            manualMode = False
+            # find number
+            while True:
+                try:
+                    numRounds = int(input(f"{bcolors.CYAN}How many rounds would you like to run? "))
+                finally:
+                    break
+
     # run it!
-    run()
+    game = Battleship(generateRandom, manualMode, numRounds)
