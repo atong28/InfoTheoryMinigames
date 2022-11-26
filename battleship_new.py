@@ -17,6 +17,8 @@ class bcolors:
     RESET = '\u001b[0m'
 
 def isHit(board):
+    
+    board.hitMode = False
     # iterate through all squares. if there is a ship that is hit but not sunk, activate hitMode
     for x in range(Board.BOARD_SIZE):
         for y in range(Board.BOARD_SIZE):
@@ -28,10 +30,10 @@ def isHit(board):
 # Evaluates the guess probability state.                                       #
 ################################################################################
 def evalBoard(board):
-    probState = np.zeros((Board.BOARD_SIZE, Board.BOARD_SIZE), dtype=int)
-    probTotal = 1
+    board.probState = np.zeros((Board.BOARD_SIZE, Board.BOARD_SIZE), dtype='int64')
+    board.probTotal = 1
 
-    board.hitMode = isHit(board)
+    isHit(board)
     
     # check if there are ships left
     shipsLeft = False
@@ -44,10 +46,12 @@ def evalBoard(board):
     if board.hitMode:
         
         # if there are no ships left, this is an impossible setup. return probTotal = 0
-        if not shipsLeft: return probState, 0
+        if not shipsLeft: 
+            board.probTotal = 0
+            return
         
         for i in range(len(board.ships)):
-            
+            ship = board.ships[i]
             if ship.sunk: continue
             
             # test for all horizontal ships
@@ -66,6 +70,7 @@ def evalBoard(board):
                     # create a ghost board that assumes this ship placed as is
                     ghostBoard = copy.deepcopy(board)
                     
+                    
                     # sink the ship, removing it from calculation 
                     ghostBoard.ships[i].sunk = True
                     
@@ -74,12 +79,15 @@ def evalBoard(board):
                     ghostBoard.gameState[x,y:y+ship.size] = 2
                     
                     # evaluate the ghost board state and find probTotal
-                    tempTotal = evalBoard(ghostBoard)[1]
+                    evalBoard(ghostBoard)
                     # throw away tempBoard. we do not need it here because that is the prob state in a future
                     
-                    # add to counter the total, and do the same for the probability board
-                    probTotal += tempTotal
-                    probState[x,y:y+ship.size] += tempTotal
+                    # print("Temp Ghost Board:")
+                    # print(ghostBoard)
+                    
+                    # add totals, and do the same for the probability board
+                    board.probTotal += ghostBoard.probTotal
+                    board.probState[x,y:y+ship.size] += ghostBoard.probTotal
                     
             # same thing for vertical ships
             orientation = 1
@@ -104,19 +112,22 @@ def evalBoard(board):
                     ghostBoard.guessState[x:x+ship.size,y] = 1
                     ghostBoard.gameState[x:x+ship.size,y] = 2
                     
+                    
+                    
                     # evaluate the ghost board state and find probTotal
-                    tempTotal = evalBoard(ghostBoard)[1]
+                    evalBoard(ghostBoard)
                     # throw away tempBoard. we do not need it here because that is the prob state in a future
                     
                     # add totals, and do the same for the probability board
-                    probTotal += tempTotal
-                    probState[x:x+ship.size,y] += tempTotal
+                    board.probTotal += ghostBoard.probTotal
+                    board.probState[x:x+ship.size,y] += ghostBoard.probTotal
     
     # if not in hitmode, sum up all possible orientations for each ship and multiply them together to estimate possible boards remaining
     else:
         
         # if there are no hit points and no ships left, return 1 (1 possibility)
-        if not shipsLeft: return probState, 1
+        if not shipsLeft: 
+            return
         
         for ship in board.ships:
             counter = 0
@@ -130,7 +141,7 @@ def evalBoard(board):
                     if overlaps(x, y, orientation, ship.size, board.guessState): continue
                     
                     # increment possible location
-                    probState[x,y:y+ship.size] += 1
+                    board.probState[x,y:y+ship.size] += 1
                     counter += 1
                     
             # test for all vertical
@@ -141,19 +152,17 @@ def evalBoard(board):
                     # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
                     
                     # increment possible location
-                    probState[x:x+ship.size,y] += 1
+                    board.probState[x:x+ship.size,y] += 1
                     counter += 1
             
             # multiply together! if counter is still at 0, this board state is impossible anyways
-            probTotal *= counter
+            board.probTotal *= counter
 
     # removes probability for ships that are already hit but not sunk
     for x in range(Board.BOARD_SIZE):
         for y in range(Board.BOARD_SIZE):
             if board.gameState[x,y] == 2 and board.guessState[x,y] == 0:
-                probState[x,y] = 0
-
-    return probState, probTotal
+                board.probState[x,y] = 0
 
 ################################################################################
 # Tests if a ship overlaps a given board.                                      #
@@ -183,7 +192,7 @@ class Battleship():
         self.counter = 0
         self.win = False
         self.autoMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
-        self.autoResults = np.zeros(100, dtype=int)
+        self.autoResults = np.zeros(100, dtype='int64')
         
         # modifiable
         self.autoRounds = 100
@@ -207,7 +216,7 @@ class Battleship():
         # run and reset after each game
         else:
             for i in range(self.autoRounds):
-                if i % 100 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
+                if i % 1 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
                 while not self.win:
                     self.playAuto()
                 self.autoResults[self.counter] += 1
@@ -325,16 +334,16 @@ class Board():
                 else:
                     self.hiddenState[x:x+ship,y] = 1
                 self.ships.append(Ship(ship, x, y, o))
-        self.probState, self.probTotal = evalBoard(self)
+        evalBoard(self)
 
     ############################################################################
     # Resets the board state.                                                  #
     # Clears hiddenState, guessState, ships                                    #
     ############################################################################
     def reset(self):
-        self.hiddenState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
-        self.guessState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
-        self.gameState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype=int)
+        self.hiddenState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype='int64')
+        self.guessState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype='int64')
+        self.gameState = np.zeros((self.BOARD_SIZE, self.BOARD_SIZE), dtype='int64')
         self.ships = []
 
     ############################################################################
@@ -399,14 +408,16 @@ class Board():
         # print the information matrix values, color coded on greyscale of 24 values
         string += f'\n{bcolors.BOLD+bcolors.YELLOW+bcolors.UNDERLINE}                      PROBABILITY MATRIX                       '
         
-        pMatrix = self.probState / self.probTotal
+        pMatrix = self.probState / sum(sum(self.probState))
 
         colorMatrix = pMatrix / np.amax(pMatrix) * 7
         string += bcolors.RESET
         for i in range(self.BOARD_SIZE):
             string += '\n  '
             for j in range(self.BOARD_SIZE):
-                string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(pMatrix[i,j],3)).ljust(5, '0')} "
+                # string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(pMatrix[i,j],3)).ljust(5, '0')} "
+                # string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(self.probState[i,j]).zfill(5)} "
+                string += f"{str(round(pMatrix[i,j], 3)).ljust(5, '0')} "
         return string
 
     ############################################################################
@@ -443,9 +454,7 @@ class Board():
             self.gameState[x,y] = 1
             
         # re-evaluate the board in new state
-        self.probState, self.probTotal = evalBoard(self)
-        
-    
+        evalBoard(self)
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
