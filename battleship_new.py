@@ -80,10 +80,6 @@ def evalBoard(board):
                     
                     # evaluate the ghost board state and find probTotal
                     evalBoard(ghostBoard)
-                    # throw away tempBoard. we do not need it here because that is the prob state in a future
-                    
-                    # print("Temp Ghost Board:")
-                    # print(ghostBoard)
                     
                     # add totals, and do the same for the probability board
                     board.probTotal += ghostBoard.probTotal
@@ -116,7 +112,6 @@ def evalBoard(board):
                     
                     # evaluate the ghost board state and find probTotal
                     evalBoard(ghostBoard)
-                    # throw away tempBoard. we do not need it here because that is the prob state in a future
                     
                     # add totals, and do the same for the probability board
                     board.probTotal += ghostBoard.probTotal
@@ -194,7 +189,6 @@ class Battleship():
         self.autoMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
         self.autoResults = np.zeros(100, dtype='int64')
         
-        # modifiable
         self.autoRounds = numRounds
 
         # if manual, just run one round; play moves until win

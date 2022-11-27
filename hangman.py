@@ -49,7 +49,7 @@ class Hangman():
         
         print(f"Phrase: " + (" ".join(self.progress)))
         
-        print(f"Q1: What spaces are there?")
+        print(f"Q1: What spaces are there? ")
         self.make_move()
         
         
@@ -60,7 +60,7 @@ class Hangman():
         print(f"Congrats! You win in {self.counter} moves.")
     
     def make_move(self):
-        guess = input("Guess a letter -> ")
+        guess = input("Guess a letter -> ").lower()
         self.counter += 1
         
         # correct guess
@@ -92,7 +92,10 @@ class Hangman():
     
     def analyze_state(self):
         print("Analyzing state: ")
-        print("")
+        
+        # find the wordlengths for each word.
+
+        
 
 if __name__ == '__main__':
 
