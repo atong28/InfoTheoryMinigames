@@ -67,7 +67,7 @@ for newSeed in nextSeed(0, 0):
         counter += 1
 
         if counter % 1000000 == 0:
-            with open(f'valid_seeds-{counter // 1000000}.json', 'w') as f:
+            with open(f'../data/seeds/valid_seeds-{counter // 1000000}.json', 'w') as f:
                 json.dump(valid_arrangements, f)
             print(f"Dumped seeds {counter-999999} to {counter}.")
 
@@ -76,7 +76,7 @@ for newSeed in nextSeed(0, 0):
 
 end = time.time()
 
-with open(f'valid_seeds-{math.ceil(counter // 1000000)}.json', 'w') as f:
+with open(f'../data/seeds/valid_seeds-{math.ceil(counter // 1000000)}.json', 'w') as f:
     json.dump(valid_arrangements, f)
 
 print(f"Done in {end-start} seconds.")
