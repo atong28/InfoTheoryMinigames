@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import json
+import math
 
 start = time.time()
 
@@ -57,16 +58,25 @@ def isValid(seed):
     
     return sum(sum(board)) == sum(ship_sizes)
     
-
+counter = 0
 for newSeed in nextSeed(0, 0):
     arr = [eval(i) for i in str(newSeed).zfill(3*len(ship_sizes))]
     
     if isValid(arr):
         valid_arrangements += [str(newSeed).zfill(3*len(ship_sizes))]
+        counter += 1
+
+        if counter % 1000000 == 0:
+            with open(f'valid_seeds-{counter // 1000000}.json', 'w') as f:
+                json.dump(valid_arrangements, f)
+            print(f"Dumped seeds {counter-999999} to {counter}.")
+
+            valid_arrangements = []
+    
 
 end = time.time()
 
-with open('valid_seeds.json', 'w') as f:
+with open(f'valid_seeds-{math.ceil(counter // 1000000)}.json', 'w') as f:
     json.dump(valid_arrangements, f)
 
 print(f"Done in {end-start} seconds.")
