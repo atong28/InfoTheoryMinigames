@@ -30,7 +30,7 @@ valid_arrangements = []
 
 # generator function for seeding
 
-ship_sizes = [5, 4]
+ship_sizes = [5, 4, 3, 3, 2]
 
 def nextSeed(recursion_depth, seed):
     for i in range(2):
