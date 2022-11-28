@@ -4,6 +4,8 @@ from string import ascii_lowercase as alc
 from collections import defaultdict
 from lib.scripts import matchesFilter, getFilteredList, getEntropy
 
+MAX_RECURSION_DEPTH = 5
+
 def updateFilter(filter, word, letter):
     filterList = list(filter)
     for i in range(len(filter)):
@@ -14,6 +16,12 @@ def updateFilter(filter, word, letter):
 def calculate(filter, wordlist, used_letters):
 
     if '?' not in filter: return
+
+    if len(wordlist) == 1:
+        pass
+
+    if len(used_letters) == MAX_RECURSION_DEPTH:
+        return getEntropy(wordlist)
 
     letterDict = defaultdict(lambda: defaultdict(lambda: {'freq':0, 'next':{}}))
 
@@ -46,7 +54,6 @@ if __name__ == "__main__":
 
     for length, wordDict in wordlist.items():
         print(f"Evaluating length {length}")
-        computedDict[length] = calculate('?'*int(length), wordlist[length], [])
-
-    with open('wikipedia-precomputed.json', 'w') as f:
-        json.dump(computedDict, f, indent=4)
+        computedDict = calculate('?'*int(length), wordlist[length], [])
+        with open(f'wikipedia-precomputed-{length}.json', 'w') as f:
+            json.dump(computedDict, f, indent=4)
