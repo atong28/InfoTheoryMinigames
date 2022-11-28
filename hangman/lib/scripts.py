@@ -24,7 +24,7 @@ def getFilteredList(filter, wordlist, used_letters, printing):
         if printing: print(f"{bcolors.BLUE+bcolors.BOLD}It must be {list(newFilteredList.keys())[0]}.")
     elif len(newFilteredList.keys()) == 0:
         if printing: print(f"{bcolors.RED+bcolors.BOLD}All options exhausted.")
-        return
+        return {}
     
     return newFilteredList
 

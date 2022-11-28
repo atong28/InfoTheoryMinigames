@@ -1,10 +1,17 @@
 from collections import defaultdict
 import lib.colors as bcolors
+from string import ascii_lowercase as alc
 import os
 
 def splitText(entry):
     result = entry.split(" ")
     return (result[0], int(result[1]))
+
+def isWord(word):
+    for letter in alc:
+        if letter in word:
+            return True
+    return False
 
 def importList():
 
@@ -22,6 +29,8 @@ def importList():
 
         # no words with accents, etc.
         if not word[0].isascii(): continue
+
+        if not isWord(word[0]): continue
 
         sortedList[len(word[0])][word[0]] = word[1]
 

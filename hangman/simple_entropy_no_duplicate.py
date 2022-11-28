@@ -24,7 +24,7 @@ def findBestLetter(filter, wordlist, used_letters):
     # sum up frequencies
     for k, v in newFilteredList.items():
         # iterate through only unique characters
-        for letter in ''.join(set(k)):
+        for letter in set(k):
             # calculate the filter for that letter
             pattern = ''.join([letter if letter == otherLetter else "?" for otherLetter in k])
 
