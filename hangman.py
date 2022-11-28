@@ -12,27 +12,6 @@ class bcolors:
     UNDERLINE = '\033[4m'
     RESET = '\u001b[0m'
 
-# load into memory the wordlist
-
-f = open('top50k.txt', 'r', encoding='utf-8')
-content = f.read()
-
-print("Loading words...")
-
-def splitText(entry):
-    result = entry.split(" ")
-    return (result[0], int(result[1]))
-
-wordList = list(map(splitText, content.splitlines()))
-
-sortedList = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
-
-for word in wordList:
-    if len(word[0]) > 59: print(word)
-    sortedList[len(word[0])].append(word)
-    
-print("Loaded the top 50,000 entries!")
-
 class Hangman():
 
     def __init__(self, secret):
@@ -94,8 +73,6 @@ class Hangman():
         print("Analyzing state: ")
         
         # find the wordlengths for each word.
-
-        
 
 if __name__ == '__main__':
 

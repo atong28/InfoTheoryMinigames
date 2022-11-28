@@ -2,6 +2,7 @@ import numpy as np
 from string import ascii_lowercase as alc
 import fnmatch
 import math
+from collections import defaultdict
 
 ################################################################################
 # Text color presets.                                                          #
@@ -110,13 +111,12 @@ def findBestLetter(filter, wordlist, used_letters):
     if not newFilteredList:
         return
 
-    # intialize the dictionary of frequencies
-    alphabetList = {}
-    entropyList = {}
-    infoList = {}
-
     # calculate the current entropy of all possible items
     currentEntropy = getEntropy(newFilteredList)
+
+    alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
+    entropyList = defaultdict(lambda: defaultdict(lambda: 0))
+    infoList = defaultdict(lambda: currentEntropy)
 
     print(f"Current entropy: {currentEntropy} bits.")
     
@@ -126,18 +126,6 @@ def findBestLetter(filter, wordlist, used_letters):
         for letter in ''.join(set(k)):
             # calculate the filter for that letter
             pattern = ''.join([letter if letter == otherLetter else "?" for otherLetter in k])
-
-            # create the letter if does not exist already
-            alphabetList.setdefault(letter, {})
-
-            # add pattern to the letter if does not exist already
-            alphabetList[letter].setdefault(pattern, 0)
-
-            # create the letter if does not exist already
-            entropyList.setdefault(letter, {})
-
-            # add pattern to the letter if does not exist already
-            entropyList[letter].setdefault(pattern, 0)
 
             # add the frequency value to this pattern to find total.
             alphabetList[letter][pattern] += v
@@ -160,9 +148,6 @@ def findBestLetter(filter, wordlist, used_letters):
 
         if letter in used_letters: continue
 
-        # add letter to dict if does not exist already, default value is current entropy
-        infoList.setdefault(letter, currentEntropy)
-
         # sum of the totals for the letter
         total = sum(dictionary.values())
 
@@ -175,8 +160,6 @@ def findBestLetter(filter, wordlist, used_letters):
             # subtract the portion of entropy per pattern
             expectedEntropy += freq / total * entropyList[letter][pattern]
 
-        # print(f"Expected resulting entropy if the letter {letter} exists: {expectedEntropy} bits")
-
         # we've found expected entropy if the letter exists, now we must consider if it does not
         
         temp_used_letters = used_letters + [letter]
@@ -185,8 +168,6 @@ def findBestLetter(filter, wordlist, used_letters):
         expectedAbsentEntropy = 0
         if absentFilteredList:
             expectedAbsentEntropy = getEntropy(absentFilteredList)
-
-        # print(f"Expected resulting entropy if the letter {letter} does not exist: {expectedAbsentEntropy} bits")
 
         # subtract from information
         infoList[letter] -= expectedEntropy * total / allTotals + expectedAbsentEntropy * (allTotals - total) / allTotals
