@@ -47,13 +47,13 @@ def findBestLetter(filter, wordlist, used_letters):
         expectedPresentEntropy = 0
 
         for pattern, freq in dictionary.items():
+
             # completes the entropy calculation.
             entropyList[letter][pattern] /= freq
             entropyList[letter][pattern] += math.log2(freq)
             expectedPresentEntropy += freq / total * entropyList[letter][pattern]
 
         # we've found expected entropy if the letter exists, now we must consider if it does not
-        
         temp_used_letters = used_letters + [letter]
         absentFilteredList = getFilteredList(filter, wordlist, temp_used_letters, False)
 
