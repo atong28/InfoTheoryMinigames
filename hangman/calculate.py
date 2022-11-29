@@ -1,10 +1,9 @@
 import os
 import json
-from string import ascii_lowercase as alc
 from collections import defaultdict
-from lib.scripts import matchesFilter, getFilteredList, getEntropy
+from lib.scripts import getFilteredList, getEntropy
 
-MAX_RECURSION_DEPTH = 5
+MAX_RECURSION_DEPTH = 3
 
 def updateFilter(filter, word, letter):
     filterList = list(filter)
@@ -18,7 +17,7 @@ def calculate(filter, wordlist, used_letters):
     if '?' not in filter: return
 
     if len(wordlist) == 1:
-        pass
+        return list(wordlist.values())[0]
 
     if len(used_letters) == MAX_RECURSION_DEPTH:
         return getEntropy(wordlist)
@@ -55,5 +54,5 @@ if __name__ == "__main__":
     for length, wordDict in wordlist.items():
         print(f"Evaluating length {length}")
         computedDict = calculate('?'*int(length), wordlist[length], [])
-        with open(f'wikipedia-precomputed-{length}.json', 'w') as f:
+        with open(f'wikipedia-precomputed-{MAX_RECURSION_DEPTH}-{length}.json', 'w') as f:
             json.dump(computedDict, f, indent=4)
