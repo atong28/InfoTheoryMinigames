@@ -41,6 +41,7 @@ def findBestLetter(filter, wordlist, used_letters):
 
     # print result
     print(f"{bcolors.RESET}There are {len(newFilteredList.keys())} remaining possible words")
+    print(newFilteredList)
     print(f"{bcolors.CYAN+bcolors.BOLD}Best letter is at index {i}: {list(frequencies.keys())[i]} at frequency {list(frequencies.values())[i]}")
 
 if __name__ == '__main__':
