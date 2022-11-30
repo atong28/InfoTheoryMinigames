@@ -113,15 +113,15 @@ class Battleship():
         bestMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
         print(f'Shot #{self.counter}: Coordinate ({self.COORDINATES_X[bestMove[0]]},{self.COORDINATES_Y[bestMove[1]]}).')
 
-        result = tuple(input("Result: "))
-        action = 0
+        result = input("Result: ")
         match result:
             case "H":
-                action = 1
+                self.board.move(1, bestMove[0], bestMove[1])
+            case "M":
+                self.board.move(0, bestMove[0], bestMove[1])
             case "S":
-                action = 2
+                self.board.move(2, bestMove[0], bestMove[1])
                 self.shipsSunk += 1
-        self.board.move(action, bestMove[0], bestMove[1])
 
         # check for win
         if self.shipsSunk == 5:
@@ -226,9 +226,9 @@ class Board():
             # if hit
             case 1:
                 self.gameState[x,y] = 2
-            # if sunk, figure out
-            case 2:
-                self.guessState[x, y]
+            # if sunk, find the neighboring squares and declare that ship as sunk
+            case other:
+                self.guessState[x,y]
             
         # re-evaluate the board in new state
         self.probState, self.probTotal = evalBoard(self, self.gameState, self.guessState)
