@@ -1,28 +1,36 @@
 # Info Theory Semester 1 Project Code
 
-## Battleship Code Walkthrough
+## Installing SRILM and Others
 
-### Structure
+### Install Python 3.11
 
-The outermost layer is the Battleship Class, which is like the controlling class for the game. Upon a Battleship object initialization, the game runs. Manual mode is a way of analyzing a specific game, and automatic runs over many different games. In essence, they are the same, where the auto run applies the best move the algorithm gives. 
+### SRILM 
 
-The main class is the Board class. I initialized the board with 4 different arrays: Hidden Board, Guess Board, Game Board, and Probability Board, for implementation. Here's what each does:
+`gcc`, `make`, `gzip` should all be pre-installed. `bzip2` was optional, but installed anyways.
 
-- Hidden Board: This stores the actual ship layout of the game. A 1 indicates a ship exists there, and a 0 indicates no ship.
-- Guess Board: This stores the possibilities from the player guessing POV. A 1 indicates no hidden ship can exist there (either a miss or a sunken ship has been recorded.) 0, on the other hand, means possible. If there exists a hit, the value at that box is still 0 for the purposes of calculation.
-- Game Board: This is what the player sees when they play the real Battleship game. A 0 indicates not checked, 1 indicates miss/not possible, and 2 indicates a hit on ship.
-- Probability Board: This is to store the indexes of the ship likeliness at each point. The highest value is the next suggested value (and it favors top left in the case of tie, though arguably we could make this random, too.) If a ship has been hit but not sunk, there is an extremely large weighted value (in which the points not close to the hit become irrelevant, and we hunt for as long as possible to find the ship.) I'll clarify more about how this is calculated later.
+Then, we must install `libiconv` and `GNU awk`. I downloaded each and moved them to /usr/share/libiconv and `/usr/share/gawk` respectively. Running the configuration as specified and then doing `sudo make` and `sudo make install` did the trick.
 
-The smallest class is the Ship class, to store details about individual ships. For efficiency, we'll be storing the top left corner's coordinates, the orientation (0 = horizontal, 1 = vertical) and the ship size. 
+Make sure SRILM Makefile's SRILM variable is set properly. I had it at `/usr/share/srilm`. Then, running `sudo make World` worked, and then I had to set system variables.
 
-### Generating a Board
+`export PATH="$PATH:$SRILM/bin/$MACHINE_TYPE:$SRILM/bin"` was recommended. I typed in manually:
 
-We'll be generating by selecting one possible orientation out of all the ships. If this overlaps with the current ships placed down, we will try again with a random orientation. This is probably not the most efficient, but it works enough.
+`export PATH="$PATH:/usr/share/srilm/bin/i686-m64:/usr/share/srilm/bin"`
 
-### Evaluating Board State
+`export MANPATH="/usr/share/srilm/man"` because there was nothing set in MANPATH previously.
 
-This is the most important part. For the purposes of this algorithm, we wish to target the areas which have the greatest probabilities, or greatest ways a ship could fit onto the board. We'll iterate through each ship that currently is floating and not sunk, and iterate through every single possible position of each ship. If the layout is possible, we add 1 to each point the ship covers. From an empty board, then, obviously, the most probable spots are the 4 center spots. Now, the more important part: once a ship is hit, how do we handle the tracking?
+Then to test, run `make test`. Once successful, go with `make cleanest` to clean up. 
 
-Once we hit a ship, we should seek to sink the entire ship. Then, the nearest points are the most valuable, the 4 points in each direction. How should we weight this? There should certainly be greater weights to the left and right of a ship IF there has been 2 or more hits in a row. In other words, once we establish a line of ships, we believe that ship will keep extending until it is sunk. What I instead did was a multiplier to the previous part. Instead of adding 1 for every single ship layout, if the ship overlaps n points, we add 100n points to each point. In other words, if a possible 4-large ship overlays 2 known points hit, then we add 200 points to each point that the theoretical ship covers! We'll iterate through this to solve.
+I ran into error installing SWIG-SRILM, but then I needed to recompile with
 
-Once this part is evaluated, we make sure every single point hit but not sunk has a probability 0 so we don't produce repeated moves. Evaluating the board state is now done!
+`MAKE_PIC = yes make` and it worked.
+
+### SWIG-SRILM
+
+Download and unzip the file from GitHub. I also moved this to `/usr/share/swig-srilm`.
+
+Modify the Makefile variables as needed. I think Perl is not necessary because we are coding in Python here.
+
+I set `PYTHON_INC=/usr/local/include/python3.11` and SRILM variables are straightforward.
+
+Then, I just run `make python` and copy `_srilm.so`, `srilm.py`, `test.py`, `test.txt`, `sample.lm` into this directory and ran it as test.
+
