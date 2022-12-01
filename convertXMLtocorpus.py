@@ -18,13 +18,16 @@ def parseSentences(filename):
 
     sentences = []
     for wordElement in root.iter('s'):
-        sentence = []
+        sentence = ""
         for word in wordElement.iter('w'):
             if word.text:
-                sentence.append(word.text.strip().lower())
-        sentences.append(" ".join(sentence))
-
+                if word.attrib['pos'] == "UNC" and "'" in word.text:
+                    sentence += word.text.strip().lower()
+                else:
+                    sentence += " "+word.text.strip().lower()
+        sentences.append(sentence.strip())
     return sentences
+
 
 sentenceList = iterateFiles(directory)
 
