@@ -331,7 +331,7 @@ class Board():
                     if not ship.sunk:
                         self.gameState[x,y] = 2
                         continue
-                        
+                    value = 0
                     # if ship is sunk, update board states
                     if ship.orientation == 0:
                         self.guessState[ship.x,ship.y:ship.y+ship.size] = 1
