@@ -17,11 +17,10 @@ def isHit(board):
 # Evaluates the guess probability state.                                       #
 ################################################################################
 def evalBoard(board):
-    board.probState = np.zeros((Board.BOARD_SIZE, Board.BOARD_SIZE), dtype='int64')
-    board.probTotal = 1
+    probState = np.zeros((Board.BOARD_SIZE, Board.BOARD_SIZE), dtype='int64')
+    probTotal = 1
 
     isHit(board)
-    
     # check if there are ships left
     shipsLeft = False
     for ship in board.ships:
@@ -29,122 +28,73 @@ def evalBoard(board):
             shipsLeft = True
             break
 
-    # if in hitmode, iterate through all possible orientations for each ship and then recurse through each orientation to find its probability weighting
-    if board.hitMode:
-        
-        # if there are no ships left, this is an impossible setup. return probTotal = 0
-        if not shipsLeft: 
-            board.probTotal = 0
-            return
-        
-        for i in range(len(board.ships)):
-            ship = board.ships[i]
-            if ship.sunk: continue
-            
-            # test for all horizontal ships
-            orientation = 0
-            for x in range(Board.BOARD_SIZE):
-                for y in range(Board.BOARD_SIZE - ship.size + 1):
-                    # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                    if overlaps(x, y, orientation, ship.size, board.guessState): continue
-                    
-                    # ship does not collide with hit point, then do nothing
-                    if sum(board.gameState[x,y:y+ship.size]) == 0: continue
-                    
-                    # may use multiplier. here for now.
-                    # multiplier = (sum(board.gameState[x,y:y+ship.size]) ** 2)
-                    
-                    # create a ghost board that assumes this ship placed as is
-                    ghostBoard = copy.deepcopy(board)
-                    
-                    
-                    # sink the ship, removing it from calculation 
-                    ghostBoard.ships[i].sunk = True
-                    
-                    # modify the ghost board's board state to account for ship placement (essentially, assumes sunk ship at this location)
-                    ghostBoard.guessState[x,y:y+ship.size] = 1
-                    ghostBoard.gameState[x,y:y+ship.size] = 2
-                    
-                    # evaluate the ghost board state and find probTotal
-                    evalBoard(ghostBoard)
-                    
-                    # add totals, and do the same for the probability board
-                    board.probTotal += ghostBoard.probTotal
-                    board.probState[x,y:y+ship.size] += ghostBoard.probTotal
-                    
-            # same thing for vertical ships
-            orientation = 1
-            for x in range(Board.BOARD_SIZE - ship.size + 1):
-                for y in range(Board.BOARD_SIZE):
-                    # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                    if overlaps(x, y, orientation, ship.size, board.guessState): continue
-                    
-                    # ship does not collide with hit point, then do nothing
-                    if sum(board.gameState[x:x+ship.size,y]) == 0: continue
-                    
-                    # may use multiplier. here for now.
-                    # multiplier = (sum(board.gameState[x:x+ship.size,y]) ** 2)
-                    
-                    # create a ghost board that assumes this ship placed as is
-                    ghostBoard = copy.deepcopy(board)
-                    
-                    # sink the ship, removing it from calculation 
-                    ghostBoard.ships[i].sunk = True
-                    
-                    # modify the ghost board's board state to account for ship placement (essentially, assumes sunk ship at this location)
-                    ghostBoard.guessState[x:x+ship.size,y] = 1
-                    ghostBoard.gameState[x:x+ship.size,y] = 2
-                    
-                    
-                    
-                    # evaluate the ghost board state and find probTotal
-                    evalBoard(ghostBoard)
-                    
-                    # add totals, and do the same for the probability board
-                    board.probTotal += ghostBoard.probTotal
-                    board.probState[x:x+ship.size,y] += ghostBoard.probTotal
+    if not shipsLeft and not board.hitMode: 
+        return probState, 1
+    if not shipsLeft: 
+        return probState, 0
     
-    # if not in hitmode, sum up all possible orientations for each ship and multiply them together to estimate possible boards remaining
-    else:
+    i = 0
+    while board.ships[i].sunk:
+        i += 1
         
-        # if there are no hit points and no ships left, return 1 (1 possibility)
-        if not shipsLeft: 
-            return
-        
-        for ship in board.ships:
-            counter = 0
-            if ship.sunk: continue
+    # test for all horizontal ships
+    orientation = 0
+    for x in range(Board.BOARD_SIZE):
+        for y in range(Board.BOARD_SIZE - ship.size + 1):
+            # if the ship collides with a miss block or a sunken ship block, it is not a valid location
+            if overlaps(x, y, orientation, ship.size, board.guessState): continue
+                
+            board.ships[i].sunk = True
+            board.guessState[x,y:y+ship.size] = 1
+            # save gameState
+            gameState = copy.deepcopy(board.gameState[x,y:y+ship.size])
+            board.gameState[x,y:y+ship.size] = 2
             
-            # test for all horizontal
-            orientation = 0
-            for x in range(Board.BOARD_SIZE):
-                for y in range(Board.BOARD_SIZE - ship.size + 1):
-                    # if the ship collides with a miss block or a sunken ship block, it is not a valid location
-                    if overlaps(x, y, orientation, ship.size, board.guessState): continue
-                    
-                    # increment possible location
-                    board.probState[x,y:y+ship.size] += 1
-                    counter += 1
-                    
-            # test for all vertical
-            orientation = 1
-            for x in range(Board.BOARD_SIZE - ship.size + 1):
-                for y in range(Board.BOARD_SIZE):
-                    if overlaps(x, y, orientation, ship.size, board.guessState): continue
-                    # since the ship is a valid placement, if the sum here is positive, it travels over a hit but not sunk ship
-                    
-                    # increment possible location
-                    board.probState[x:x+ship.size,y] += 1
-                    counter += 1
+            # evaluate the ghost board state and find probTotal
+            ghostTotal = evalBoard(board)[1]
             
-            # multiply together! if counter is still at 0, this board state is impossible anyways
-            board.probTotal *= counter
+            # add totals, and do the same for the probability board
+            probTotal += ghostTotal
+            probState[x,y:y+ship.size] += ghostTotal
+
+            # revert
+            board.ships[i].sunk = False
+            board.guessState[x,y:y+ship.size] = 0
+            board.gameState[x,y:y+ship.size] = gameState
+                
+    # same thing for vertical ships
+    orientation = 1
+    for x in range(Board.BOARD_SIZE - ship.size + 1):
+        for y in range(Board.BOARD_SIZE):
+            # if the ship collides with a miss block or a sunken ship block, it is not a valid location
+            if overlaps(x, y, orientation, ship.size, board.guessState): continue
+            
+            board.ships[i].sunk = True
+            board.guessState[x:x+ship.size,y] = 1
+            # save gameState
+            gameState = copy.deepcopy(board.gameState[x:x+ship.size,y])
+            board.gameState[x:x+ship.size,y] = 2
+            
+            # evaluate the ghost board state and find probTotal
+            ghostTotal = evalBoard(board)[1]
+            
+            # add totals, and do the same for the probability board
+            probTotal += ghostTotal
+            probState[x:x+ship.size,y] += ghostTotal
+
+            # revert
+            board.ships[i].sunk = False
+            board.guessState[x:x+ship.size,y] = 0
+            board.gameState[x:x+ship.size,y] = gameState
 
     # removes probability for ships that are already hit but not sunk
     for x in range(Board.BOARD_SIZE):
         for y in range(Board.BOARD_SIZE):
             if board.gameState[x,y] == 2 and board.guessState[x,y] == 0:
-                board.probState[x,y] = 0
+                probTotal -= probState[x,y]
+                probState[x,y] = 0
+
+    return probState, probTotal
 
 ################################################################################
 # Tests if a ship overlaps a given board.                                      #
@@ -287,7 +237,7 @@ class Battleship():
 ################################################################################
 class Board():
     BOARD_SIZE = 10
-    DEFAULT_SHIP_SIZES = [5,4,3,3,2]
+    DEFAULT_SHIP_SIZES = [5,4,3]
     
     ############################################################################
     # Initiates a board. Resets first, then generates, and then evaluates.     #
@@ -315,7 +265,7 @@ class Board():
                 else:
                     self.hiddenState[x:x+ship,y] = 1
                 self.ships.append(Ship(ship, x, y, o))
-        evalBoard(self)
+        self.probState, self.probTotal = evalBoard(self)
 
     ############################################################################
     # Resets the board state.                                                  #
@@ -398,7 +348,7 @@ class Board():
             for j in range(self.BOARD_SIZE):
                 # string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(round(pMatrix[i,j],3)).ljust(5, '0')} "
                 # string += f"\033[38;5;{248 + int(colorMatrix[i,j])}m{str(self.probState[i,j]).zfill(5)} "
-                string += f"{str(round(pMatrix[i,j], 3)).ljust(5, '0')} "
+                string += f"{str(round(self.probState[i,j], 3)).rjust(6, ' ')} "
         return string
 
     ############################################################################
@@ -435,7 +385,7 @@ class Board():
             self.gameState[x,y] = 1
             
         # re-evaluate the board in new state
-        evalBoard(self)
+        self.probState, self.probTotal = evalBoard(self)
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
@@ -491,6 +441,7 @@ if __name__ == '__main__':
     gen = ""
     generateRandom = False
     manualMode = True
+    numRounds = 1
     while (len(gen) != 1) and (gen != "y" and gen != "n"):
         gen = str.lower(input(f"{bcolors.CYAN}Would you like to generate a board randomly? Press Y for random, N for manual generation. "))
     if gen == "y": 

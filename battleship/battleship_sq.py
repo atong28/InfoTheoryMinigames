@@ -165,7 +165,7 @@ class Battleship():
     # Plays one move in auto mode.                                             #
     ############################################################################
     def playAuto(self):
-        self.board.move(self.autoMove[0],self.autoMove[1])
+        self.counter += self.board.move(self.autoMove[0],self.autoMove[1])
         self.counter += 1
         
         nextMove = tuple(str(np.argmax(self.board.probState)).zfill(2))
@@ -315,6 +315,8 @@ class Board():
     ############################################################################
     def move(self, x, y):
         
+        value = -1
+
         # if hit
         if self.hiddenState[x,y] == 1:
             
@@ -342,9 +344,12 @@ class Board():
         else:
             self.guessState[x,y] = 1
             self.gameState[x,y] = 1
+            value = 0
             
         # re-evaluate the board in new state
         self.probState, self.probTotal = evalBoard(self, self.gameState, self.guessState)
+
+        return value
 
 ################################################################################
 # SHIP CLASS: Stores individual ship object information.                       #
