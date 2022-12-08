@@ -1,5 +1,17 @@
 # Info Theory Semester 1 Project Code
 
+## Battleship To-Do
+
+Have to finalize the game algorithm with sinking detection
+
+## Hangman To-Do
+
+Implement WordPunkt Tokenizer to process data
+
+Train new LM
+
+Experiment and implement
+
 ## Installing SRILM and Others
 
 ### Install Python 3.11
