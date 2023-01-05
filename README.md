@@ -1,17 +1,5 @@
 # Info Theory Semester 1 Project Code
 
-## Battleship To-Do
-
-Have to finalize the game algorithm with sinking detection
-
-## Hangman To-Do
-
-Implement WordPunkt Tokenizer to process data
-
-Train new LM
-
-Experiment and implement
-
 ## Installing SRILM and Others
 
 ### Install Python 3.11
@@ -71,3 +59,6 @@ We now have an ARPA LM stored as the file `bnc-pruned.lm`.
 ### HMM
 
 From this point on, we will use the calculated bigram and unigram logprobs to calculate the transition matrices.
+
+Calculate probabilities with SRILM:
+```ngram -lm bnc-pruned.lm -count-order 2 -ppl test.txt -debug 2```
