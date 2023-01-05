@@ -1,5 +1,6 @@
 #import hangman.lib.colors as bcolors
 from collections import defaultdict
+import numpy as np
 
 class bcolors:
     RED = '\u001b[31;1m'
@@ -11,6 +12,29 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     RESET = '\u001b[0m'
+
+def matchesFilter(str, filter, used_letters):
+    if len(str) != len(filter): return False
+    
+    for letter in used_letters:
+        if letter in filter: continue
+        if letter in str: return False
+    
+    for i in range(len(str)):
+        if filter[i] == "█": 
+            if str[i] in used_letters: return False
+            continue
+        
+        if filter[i] != str[i]: return False
+    return True
+
+def getFilteredList(filter, wordlist, used_letters):
+    newFilteredList = {word for word in wordlist if matchesFilter(word, filter, used_letters)}
+
+    if len(newFilteredList) == 0:
+        return {}
+    
+    return newFilteredList
 
 VOCAB = defaultdict(lambda: [])
 
@@ -38,14 +62,32 @@ class Hangman():
         print(f"Phrase: " + (" ".join(self.progress)))
         
         while self.letters_left > 0:
-            viable = self.evaluate_available_words()
+            self.analyze_state()
             self.make_move()
                 
         print(f"Congrats! You win in {self.counter} moves.")
     
+    def analyze_state(self):
+        print("Analyzing state: ")
+        viable = self.evaluate_available_words()
+        print("Number of possibilities for each word:")
+        words = []
+        for i in range(len(viable)):
+            print(f"{self.words[i]} has {len(viable[i])} possibilities.")
+            words += viable[i]
+        arr = np.zeros((len(words), len(words)), dtype=float)
+
+        # evaluate probabilities and run HMM
+
+        # return most likely phrase and associated probability
+
+        # find the next best letter
+
     def evaluate_available_words(self):
         viable = []
-        
+        for word in self.words:
+            viable.append(getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
+        return viable
 
     def make_move(self, guess=""):
 
@@ -71,6 +113,8 @@ class Hangman():
         else:
             print(f"{bcolors.BOLD + bcolors.RED}Already used or invalid. Try again")
             self.counter -= 1
+
+        self.words = "".join(self.progress).split(" ")
     
     # update the progress left
     def progress_updater(self, guess):
@@ -80,13 +124,10 @@ class Hangman():
                 self.letters_left -= 1
         return " ".join(self.progress)
     
-    def analyze_state(self):
-        print("Analyzing state: ")
-        
-        # find the wordlengths for each word.
+    
 
 if __name__ == '__main__':
-    for line in open('vocab.txt').readlines():
+    for line in open('vocabStrict.txt').readlines():
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
