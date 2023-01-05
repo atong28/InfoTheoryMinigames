@@ -25,9 +25,10 @@ def parseSentences(filename):
         sentences.append(sentence.strip())
     return sentences
 
+if __name__ == "__main__":
 
-sentenceList = iterateFiles(directory)
+    sentenceList = iterateFiles(directory)
 
-with open('bnc-corpus.txt', 'w') as f:
-    f.write("\n".join(sentenceList))
-    f.close()
+    with open('bnc-corpus.txt', 'w') as f:
+        f.write("\n".join(sentenceList))
+        f.close()

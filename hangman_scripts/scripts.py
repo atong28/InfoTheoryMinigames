@@ -1,5 +1,4 @@
-import lib.colors as bcolors
-import math
+import colors as bcolors
 
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
@@ -14,7 +13,6 @@ def matchesFilter(str, filter, used_letters):
             continue
         
         if filter[i] != str[i]: return False
-        
     return True
 
 def getFilteredList(filter, wordlist, used_letters, printing):
@@ -27,16 +25,3 @@ def getFilteredList(filter, wordlist, used_letters, printing):
         return {}
     
     return newFilteredList
-
-def getEntropy(filteredList):
-    entropy = 0
-    total = 0
-
-    for v in filteredList.values():
-        entropy -= v * math.log2(v)
-        total += v
-
-    entropy /= total
-    entropy += math.log2(total)
-
-    return entropy

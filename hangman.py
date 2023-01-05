@@ -1,17 +1,6 @@
-#import hangman.lib.colors as bcolors
+from hangman_scripts import colors
 from collections import defaultdict
 import numpy as np
-
-class bcolors:
-    RED = '\u001b[31;1m'
-    BLUE = '\u001b[34;1m'
-    YELLOW = '\u001b[33;1m'
-    GREEN = '\u001b[32;1m'
-    MAGENTA = '\u001b[35;1m'
-    CYAN = '\u001b[36;1m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    RESET = '\u001b[0m'
 
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
@@ -75,6 +64,9 @@ class Hangman():
         for i in range(len(viable)):
             print(f"{self.words[i]} has {len(viable[i])} possibilities.")
             words += viable[i]
+
+        # if too many possibilities, ask another letter
+
         arr = np.zeros((len(words), len(words)), dtype=float)
 
         # evaluate probabilities and run HMM
@@ -97,21 +89,21 @@ class Hangman():
         
         # correct guess
         if guess in self.secret and guess not in self.letters_used:
-            print(f"{bcolors.BOLD + bcolors.GREEN}Correct guess")
+            print(f"{colors.BOLD + colors.GREEN}Correct guess")
             self.letters_used += [guess]
-            print(f"{bcolors.BOLD + bcolors.BLUE}Progress: {self.progress_updater(guess)}")
-            print(f"{bcolors.BOLD + bcolors.YELLOW}Letters used: {self.letters_used}")
+            print(f"{colors.BOLD + colors.BLUE}Progress: {self.progress_updater(guess)}")
+            print(f"{colors.BOLD + colors.YELLOW}Letters used: "+ (", ".join(self.letters_used)))
             
         # incorrect guess
         elif guess not in self.secret and guess not in self.letters_used:
-            print(f"{bcolors.BOLD + bcolors.RED}Incorrect guess")
+            print(f"{colors.BOLD + colors.RED}Incorrect guess")
             self.letters_used += [guess]
-            print(f"{bcolors.BOLD + bcolors.BLUE}Progress: " + (" ".join(self.progress)))
-            print(f"{bcolors.BOLD + bcolors.YELLOW}Letters used: {self.letters_used}")
+            print(f"{colors.BOLD + colors.BLUE}Progress: " + (" ".join(self.progress)))
+            print(f"{colors.BOLD + colors.YELLOW}Letters used: "+ (", ".join(self.letters_used)))
             
         # invalid input
         else:
-            print(f"{bcolors.BOLD + bcolors.RED}Already used or invalid. Try again")
+            print(f"{colors.BOLD + colors.RED}Already used or invalid. Try again")
             self.counter -= 1
 
         self.words = "".join(self.progress).split(" ")
