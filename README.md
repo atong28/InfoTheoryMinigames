@@ -40,6 +40,10 @@ I ran into error installing SWIG-SRILM, need to set `MAKE_PIC` to yes:
 
 ```MAKE_PIC = yes make```
 
+Note: this actually ended up not affecting the PATH at all, so I ended up manually adding `i686-m64` to `$PATH` by making a script in `/etc/profile.d/srilm.sh` with the following text:
+
+```pathmunge /usr/share/srilm/bin/i686-m64```
+
 ### SWIG-SRILM
 
 Download and unzip the file from GitHub. I also moved this to `/usr/share/swig-srilm`.
@@ -50,3 +54,20 @@ I set `PYTHON_INC=/usr/local/include/python3.11` and SRILM variables are straigh
 
 Then, I just run `make python` and copy `_srilm.so`, `srilm.py`, `test.py`, `test.txt`, `sample.lm` into this directory and ran it as test.
 
+### Training the LM
+
+To train the LM, I used `convert.py` to parse all of the BNC's text into purely tokenized words, where then each sentence occupies a line for SRILM to parse.
+
+Then, I used `ngram-count` to train the LM:
+
+```ngram-count -order 5 -kndiscount -interpolate -text bnc-corpus.txt -l bnc.lm```
+
+And I pruned the LM of low probability words with:
+
+```ngram -lm bnc.lm -prune 1e-8 -write-lm bnc-pruned.lm```
+
+We now have an ARPA LM stored as the file `bnc-pruned.lm`.
+
+### HMM
+
+From this point on, we will use the calculated bigram and unigram logprobs to calculate the transition matrices.

@@ -21,11 +21,7 @@ def parseSentences(filename):
         sentence = ""
         for word in wordElement.iter('w'):
             if word.text:
-                if not all([char in word for char in "abcdefghijklmnopqrstuvwxyz-'"]): continue
-                if word.attrib['pos'] == "UNC" and "'" in word.text:
-                    sentence += word.text.strip().lower()
-                else:
-                    sentence += " "+word.text.strip().lower()
+                sentence += " "+word.text.strip().lower()
         sentences.append(sentence.strip())
     return sentences
 
