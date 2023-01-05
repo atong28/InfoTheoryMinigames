@@ -1,4 +1,5 @@
 *.pyc
 .DS_Store
-wikipedia-precomputed-*
 bnc-pruned.lm
+bnc.lm
+bnc-corpus.txt
