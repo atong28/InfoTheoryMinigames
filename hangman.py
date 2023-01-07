@@ -140,7 +140,7 @@ class Hangman():
 
         # if too many possibilities, ask another letter
         
-        initial_prob = [getBigramProb(n, f"<s> {word}") for word in words]
+        initial_prob = [10 ** getBigramProb(n, f"<s> {word}") for word in words]
         total = sum(initial_prob)
         initial_prob = [norm/total for norm in initial_prob]
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
@@ -158,7 +158,8 @@ class Hangman():
             for j in range(len(viable[i])):
                 for k in range(len(viable[i+1])):
                     print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
-                    transition_matrix[buf+j, buf+j+k] = getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
+                    print(f"Updating location at {buf+j}, {buf+j+k}")
+                    transition_matrix[buf+j, buf+j+k] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
             buf += len(viable[i])
