@@ -130,7 +130,7 @@ class Hangman():
         viable = self.evaluate_available_words()
         print("Number of possibilities for each word:")
         words = []
-        emission_matrix = np.zeros((len(words), len(viable)))
+        emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
         for i in range(len(viable)):
             print(f"{self.words[i]} has {len(viable[i])} possibilities.")
             print(viable[i])
