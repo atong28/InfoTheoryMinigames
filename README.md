@@ -61,4 +61,4 @@ We now have an ARPA LM stored as the file `bnc-pruned.lm`.
 From this point on, we will use the calculated bigram and unigram logprobs to calculate the transition matrices.
 
 Calculate probabilities with SRILM:
-```ngram -lm bnc-pruned.lm -count-order 2 -ppl test.txt -debug 2```
+```ngram -lm bnc-pruned.lm -order 2 -ppl test.txt -debug 2```
