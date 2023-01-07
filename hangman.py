@@ -19,10 +19,10 @@ def matchesFilter(str, filter, used_letters):
     return True
 
 def getFilteredList(filter, wordlist, used_letters):
-    newFilteredList = {word for word in wordlist if matchesFilter(word, filter, used_letters)}
+    newFilteredList = [word for word in wordlist if matchesFilter(word, filter, used_letters)]
 
     if len(newFilteredList) == 0:
-        return {}
+        return []
     
     return newFilteredList
 
