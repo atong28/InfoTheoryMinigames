@@ -140,16 +140,16 @@ class Hangman():
 
         # if too many possibilities, ask another letter
         
-        initial_prob = [10 ** getBigramProb(n, f"<s> {word}") for word in words]
-        total = sum(initial_prob)
-        initial_prob = [norm/total for norm in initial_prob]
+        initial_prob = np.zeros((len(words)), dtype=float)
+        for i in range(len(viable[0])):
+            initial_prob[i] = viable[0][i]
+        initial_prob /= sum(initial_prob)
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
         
         print(f"Total number of words: {len(words)}")
         print(f"Size of array Pi: {len(initial_prob)}")
         print(initial_prob)
-        print(f"Shape of matrix Tm: {transition_matrix.shape}")
-        print(transition_matrix)
+        
         print(f"Shape of matrix Em: {emission_matrix.shape}")
         print(emission_matrix)
         
@@ -164,6 +164,9 @@ class Hangman():
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
             buf += len(viable[i])
             
+        print(f"Shape of matrix Tm: {transition_matrix.shape}")
+        print(transition_matrix)
+        
         sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
         
         print(f"Most Likely Sequence: {sequence}")
