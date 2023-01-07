@@ -93,7 +93,7 @@ def viterbi(emission_probs: np.ndarray,
     return state_sequence[::-1], sequence_prob
 
 VOCAB = defaultdict(lambda: [])
-
+np.set_printoptions(precision=3)
 n = initLM(2)
 
 class Hangman():
@@ -158,8 +158,8 @@ class Hangman():
             for j in range(len(viable[i])):
                 for k in range(len(viable[i+1])):
                     print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
-                    print(f"Updating location at {buf+j}, {buf+j+k}")
-                    transition_matrix[buf+j, buf+j+k] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
+                    print(f"Updating location at {buf+j}, {buf+j+k+len(viable[i])}")
+                    transition_matrix[buf+j, buf+j+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
             buf += len(viable[i])
