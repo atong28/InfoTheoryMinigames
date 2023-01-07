@@ -133,7 +133,7 @@ class Hangman():
         emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
         for i in range(len(viable)):
             print(f"{self.words[i]} has {len(viable[i])} possibilities.")
-            print(viable[i])
+            #print(viable[i])
             emission_matrix[len(words):len(words)+len(viable[i]), i] = 1
             words += viable[i]
             
@@ -146,26 +146,26 @@ class Hangman():
         initial_prob /= sum(initial_prob)
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
         
-        print(f"Total number of words: {len(words)}")
-        print(f"Size of array Pi: {len(initial_prob)}")
-        print(initial_prob)
+        #print(f"Total number of words: {len(words)}")
+        #print(f"Size of array Pi: {len(initial_prob)}")
+        #print(initial_prob)
         
-        print(f"Shape of matrix Em: {emission_matrix.shape}")
-        print(emission_matrix)
+        #print(f"Shape of matrix Em: {emission_matrix.shape}")
+        #print(emission_matrix)
         
         buf = 0
         for i in range(len(viable)-1):
             for j in range(len(viable[i])):
                 for k in range(len(viable[i+1])):
-                    print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
-                    print(f"Updating location at {buf+j}, {buf+k+len(viable[i])}")
+                    #print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
+                    #print(f"Updating location at {buf+j}, {buf+k+len(viable[i])}")
                     transition_matrix[buf+j, buf+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
             buf += len(viable[i])
             
-        print(f"Shape of matrix Tm: {transition_matrix.shape}")
-        print(transition_matrix)
+        #print(f"Shape of matrix Tm: {transition_matrix.shape}")
+        #print(transition_matrix)
         
         sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
         
@@ -220,7 +220,7 @@ class Hangman():
 if __name__ == '__main__':
     
     print(f"{colors.BOLD + colors.BLUE}Welcome to Hangman! Loading data...")
-    for line in open('vocabStricter.txt').readlines():
+    for line in open('vocabStrict.txt').readlines():
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
