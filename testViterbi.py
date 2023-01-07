@@ -104,3 +104,6 @@ max_seq, seq_prob = viterbi(
     init_hidden_probs,
     observed_states,
 )
+
+print(max_seq)
+print(seq_prob)

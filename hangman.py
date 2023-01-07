@@ -145,6 +145,10 @@ class Hangman():
         initial_prob = [norm/total for norm in initial_prob]
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
         
+        print(f"Total number of words: {len(words)}")
+        print(f"Size of array Pi: {len(initial_prob)}")
+        print(f"Shape of matrix Tm: {transition_matrix.shape}")
+        print(f"Shape of matrix Em: {emission_matrix.shape}")
         
         buf = 0
         for i in range(len(viable)-1):
