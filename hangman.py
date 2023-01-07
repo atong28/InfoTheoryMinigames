@@ -142,7 +142,7 @@ class Hangman():
         
         initial_prob = np.zeros((len(words)), dtype=float)
         for i in range(len(viable[0])):
-            initial_prob[i] = viable[0][i]
+            initial_prob[i] = 10 ** getBigramProb(n, f'<s> {viable[0][i]}')
         initial_prob /= sum(initial_prob)
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
         
