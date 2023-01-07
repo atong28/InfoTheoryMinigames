@@ -106,14 +106,21 @@ class Hangman():
         self.letters_left = len(self.secret)
         self.progress = ["█"] * self.letters_left
 
+        self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
+        
         self.make_move(" ")
-        self.make_move("e")
-        self.make_move("a")
-        self.make_move("i")
-        self.make_move("s")
-        self.make_move("r")
+        
+        self.core_game_stage_one()
         
         self.core_game_stage_two()
+    
+    def core_game_stage_one(self):
+        for letter in self.order:
+            viable = self.evaluate_available_words()
+            if sum([len(wordlist) for wordlist in viable]) < 5000:
+                print(f"{colors.BOLD + colors.GREEN}Stage 1 completed. Moving on to stage 2...")
+                return
+            self.make_move(letter)
     
     def core_game_stage_two(self):
         
@@ -144,28 +151,18 @@ class Hangman():
         for i in range(len(viable[0])):
             initial_prob[i] = 10 ** getBigramProb(n, f'<s> {viable[0][i]}')
         initial_prob /= sum(initial_prob)
+        
+        
+        # define the transition matrix
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
-        
-        #print(f"Total number of words: {len(words)}")
-        #print(f"Size of array Pi: {len(initial_prob)}")
-        #print(initial_prob)
-        
-        #print(f"Shape of matrix Em: {emission_matrix.shape}")
-        #print(emission_matrix)
-        
         buf = 0
         for i in range(len(viable)-1):
             for j in range(len(viable[i])):
                 for k in range(len(viable[i+1])):
-                    #print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
-                    #print(f"Updating location at {buf+j}, {buf+k+len(viable[i])}")
                     transition_matrix[buf+j, buf+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
             buf += len(viable[i])
-            
-        #print(f"Shape of matrix Tm: {transition_matrix.shape}")
-        #print(transition_matrix)
         
         sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
         
@@ -224,7 +221,7 @@ if __name__ == '__main__':
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
-    readLM(n, "bnc-pruned.lm")
+    readLM(n, "bnc-pruned-2.lm")
     print(f"{colors.BOLD + colors.GREEN}Data loaded!")
     secret = input("What is the secret? Enter here: ")
     game = Hangman(secret.lower())
