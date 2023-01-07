@@ -157,7 +157,7 @@ class Hangman():
         for i in range(len(viable)-1):
             for j in range(len(viable[i])):
                 for k in range(len(viable[i+1])):
-                    print("Checking: "+' '.join([viable[i][j], viable[i+1][k]] + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}"))
+                    print("Checking: "+' '.join([viable[i][j], viable[i+1][k]]) + f" | {getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))}")
                     transition_matrix[buf+j, buf+j+k] = getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
