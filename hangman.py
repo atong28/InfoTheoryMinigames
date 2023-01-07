@@ -140,11 +140,9 @@ class Hangman():
 
         # if too many possibilities, ask another letter
         
-        #state_space = words
-        obs_space = self.words
-        observations = self.words
         initial_prob = [getBigramProb(n, f"<s> {word}") for word in words]
-        initial_prob /= sum(initial_prob)
+        total = sum(initial_prob)
+        initial_prob = [norm/total for norm in initial_prob]
         transition_matrix = np.zeros((len(words), len(words)), dtype=float)
         
         
@@ -208,11 +206,13 @@ class Hangman():
     
 
 if __name__ == '__main__':
+    
+    print(f"{colors.BOLD + colors.BLUE}Welcome to Hangman! Loading data...")
     for line in open('vocabStrict.txt').readlines():
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
     readLM(n, "bnc-pruned.lm")
-
+    print(f"{colors.BOLD + colors.GREEN}Data loaded!")
     secret = input("What is the secret? Enter here: ")
     game = Hangman(secret.lower())
