@@ -147,8 +147,11 @@ class Hangman():
         
         print(f"Total number of words: {len(words)}")
         print(f"Size of array Pi: {len(initial_prob)}")
+        print(initial_prob)
         print(f"Shape of matrix Tm: {transition_matrix.shape}")
+        print(transition_matrix)
         print(f"Shape of matrix Em: {emission_matrix.shape}")
+        print(emission_matrix)
         
         buf = 0
         for i in range(len(viable)-1):
@@ -157,7 +160,7 @@ class Hangman():
                     transition_matrix[buf+j, buf+j+k] = getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
                 # normalize probabilities
                 transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
-            buf += len(viable)
+            buf += len(viable[i])
             
         sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
         
