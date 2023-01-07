@@ -212,7 +212,7 @@ class Hangman():
 if __name__ == '__main__':
     
     print(f"{colors.BOLD + colors.BLUE}Welcome to Hangman! Loading data...")
-    for line in open('vocabStrict.txt').readlines():
+    for line in open('vocabStricter.txt').readlines():
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
