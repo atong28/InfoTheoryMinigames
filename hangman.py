@@ -198,11 +198,11 @@ class Hangman():
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
-            p[i] = 20 ** getSentenceProb(n, phrases[i], len(self.words))
+            p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
             
         p /= sum(p)
         
-        searchDepth = (-1) * min(10, len(phrases))
+        searchDepth = (-1) * min(20, len(phrases))
         
         index = p.argsort()[searchDepth:][::-1]
         
