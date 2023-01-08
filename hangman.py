@@ -175,7 +175,7 @@ class Hangman():
                 k = list(sort.keys())
                 # find the highest entropy as long as it is in the markov model
                 if k[i] in ''.join(seq):
-                    print(f"{colors.CYAN+colors.BOLD}Best letter is {k[i]}: Expected information gained is {sort[k[i]]} bits.")
+                    print(f"{colors.CYAN+colors.BOLD}STAGE TWO | Best letter is {k[i]}: Expected information gained is {sort[k[i]]} bits.")
                     self.make_move()#k[i])
                     break
             
@@ -200,7 +200,7 @@ class Hangman():
             
         p /= sum(p)
         
-        np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
+        p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
         searchDepth = (-1) * min(500, len(phrases))
         
@@ -216,7 +216,7 @@ class Hangman():
         maxInfo = max(info_list.values())
         maxInfoKey = max(info_list, key=info_list.get)
         
-        print(f"{colors.CYAN+colors.BOLD}Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
+        print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
         
         self.make_move()
         
