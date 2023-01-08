@@ -30,9 +30,9 @@ def getEntropy(filtered_list):
     total = 0
 
     for freq in filtered_list:
-        print(freq)
-        entropy -= freq * math.log2(freq)
-        total += freq
+        if freq != 0:
+            entropy -= freq * math.log2(freq)
+            total += freq
 
     entropy /= total
     entropy += math.log2(total)
