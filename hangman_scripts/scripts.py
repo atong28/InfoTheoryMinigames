@@ -70,6 +70,7 @@ def calculate(filter, wordlist, used_letters, p):
 
     # total of all frequencies for normalization
     all_totals = sum([sum(dictionary.values()) for dictionary in alphabetList.values()])
+    print(f"All total: {all_totals}")
 
     for letter, dictionary in alphabetList.items():
 
@@ -106,6 +107,6 @@ def calculate(filter, wordlist, used_letters, p):
         print(f"letter {letter} | pe: {expected_present_entropy}, ae: {expected_absent_entropy}")
 
         # set the values for expected information gained
-        infoList[letter] -= expected_present_entropy * total / all_totals + expected_absent_entropy * (all_totals - total) / all_totals
+        infoList[letter] -= expected_present_entropy * total + expected_absent_entropy * (1 - total)
 
     return infoList
