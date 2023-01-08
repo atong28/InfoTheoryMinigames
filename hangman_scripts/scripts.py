@@ -1,5 +1,6 @@
 import math
 from collections import defaultdict
+import numpy as np
 
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
@@ -86,7 +87,13 @@ def calculate(filter, wordlist, used_letters, p):
         # we've found expected entropy if the letter exists, now we must consider if it does not
         temp_used_letters = used_letters + [letter]
         absent_filtered_list = getFilteredList(filter, wordlist, temp_used_letters)
-        ap = [p[i] for i in range(len(wordlist)) if wordlist[i] in absent_filtered_list]
+        ap = np.zeros((len(absent_filtered_list)), dtype=float)
+        
+        count = 0
+        for i in range(len(wordlist)):
+            if wordlist[i] in absent_filtered_list:
+                ap[count] = p[i]
+        ap /= sum(ap)
 
         expected_absent_entropy = 0
         if absent_filtered_list:

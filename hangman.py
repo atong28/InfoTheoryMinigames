@@ -114,7 +114,11 @@ class Hangman():
             
             for i in range(len(viable)):
                 # create a unigram probability list
-                p = [10 ** getUnigramProb(n, word) for word in viable[i]]
+                p = np.zeros((len(viable[i])), dtype=float)
+                for j in range(len(viable[i])):
+                    p[j] = 10 ** getUnigramProb(n, viable[i][j])
+                p[j] /= sum(p[j])
+                
                 
                 e = scripts.getEntropy(p)
                 print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(viable[i])} possibilities.")
