@@ -201,7 +201,7 @@ class Hangman():
             
         p /= sum(p)
         
-        searchDepth = (-1) * min(500, len(phrases))
+        searchDepth = (-1) * min(20, len(phrases))
         
         index = p.argsort()[searchDepth:][::-1]
         
