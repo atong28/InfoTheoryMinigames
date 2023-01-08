@@ -139,6 +139,7 @@ class Hangman():
                 if prob > 0.95:
                     print(f"STAGE THREE | Guessing phrase {phrase}")
                     break
+                continue
             
             initial_prob = np.zeros((len(words)), dtype=float)
             for i in range(len(self.viable[0])):
@@ -169,8 +170,6 @@ class Hangman():
             if prob > 0.95:
                 print(f"Guessing phrase {' '.join(seq)}")
                 break
-            
-            
             
             sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
             for i in reversed(range(len(sort.values()))):
@@ -206,10 +205,15 @@ class Hangman():
         
         index = p.argsort()[searchDepth:][::-1]
         
-        # print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
+        info_list = scripts.calculate(''.join(self.progress), phrases, self.letters_used, p)
         
         for i in range(len(index)):
             print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
+            
+        maxInfo = max(info_list.values())
+        maxInfoKey = max(info_list, key=info_list.get)
+        
+        print(f"{colors.CYAN+colors.BOLD}Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
         
         return phrases[index[0]], p[index[0]]
         
