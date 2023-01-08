@@ -1,30 +1,7 @@
-from hangman_scripts import colors
+from hangman_scripts import colors, scripts
 from collections import defaultdict
 import numpy as np
 from srilm import *
-
-def matchesFilter(str, filter, used_letters):
-    if len(str) != len(filter): return False
-    
-    for letter in used_letters:
-        if letter in filter: continue
-        if letter in str: return False
-    
-    for i in range(len(str)):
-        if filter[i] == "█": 
-            if str[i] in used_letters: return False
-            continue
-        
-        if filter[i] != str[i]: return False
-    return True
-
-def getFilteredList(filter, wordlist, used_letters):
-    newFilteredList = [word for word in wordlist if matchesFilter(word, filter, used_letters)]
-
-    if len(newFilteredList) == 0:
-        return []
-    
-    return newFilteredList
 
 def step(mu_prev: np.ndarray,
          emission_probs: np.ndarray,
@@ -120,61 +97,62 @@ class Hangman():
             if sum([len(wordlist) for wordlist in viable]) < 5000:
                 print(f"{colors.BOLD + colors.GREEN}Stage 1 completed. Moving on to stage 2...")
                 return
+            print(f"{colors.BOLD + colors.BLUE}STAGE ONE | Current Phrase: " + (" ".join(self.progress)))
             self.make_move(letter)
     
     def core_game_stage_two(self):
-        
-        print(f"Phrase: " + (" ".join(self.progress)))
+        print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Current Phrase: " + (" ".join(self.progress)))
         
         while self.letters_left > 0:
-            self.analyze_state()
+            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Analyzing state...")
+            viable = self.evaluate_available_words()
+            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Number of possibilities for each word:")
+            words = []
+            emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
+            for i in range(len(viable)):
+                # create a unigram probability list
+                p = [10 ** getUnigramProb(n, word) for word in viable[i]]
+                
+                e = scripts.getEntropy(p)
+                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(viable[i])} possibilities.")
+                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has an entropy of {e} bits.")
+                emission_matrix[len(words):len(words)+len(viable[i]), i] = 1
+                words += viable[i]
+            
+            initial_prob = np.zeros((len(words)), dtype=float)
+            for i in range(len(viable[0])):
+                initial_prob[i] = 10 ** getBigramProb(n, f'<s> {viable[0][i]}')
+            initial_prob /= sum(initial_prob)
+            
+            
+            # define the transition matrix
+            transition_matrix = np.zeros((len(words), len(words)), dtype=float)
+            buf = 0
+            for i in range(len(viable)-1):
+                for j in range(len(viable[i])):
+                    for k in range(len(viable[i+1])):
+                        transition_matrix[buf+j, buf+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
+                    # normalize probabilities
+                    transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
+                buf += len(viable[i])
+            
+            sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
+            
+            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Most Likely Sequence: {sequence}")
+            for result in sequence:
+                print(words[result])
+            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Probability: {prob}")
             self.make_move()
                 
-        print(f"Congrats! You win in {self.counter} moves.")
-    
-    def analyze_state(self):
-        print("Analyzing state: ")
-        viable = self.evaluate_available_words()
-        print("Number of possibilities for each word:")
-        words = []
-        emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
-        for i in range(len(viable)):
-            print(f"{self.words[i]} has {len(viable[i])} possibilities.")
-            #print(viable[i])
-            emission_matrix[len(words):len(words)+len(viable[i]), i] = 1
-            words += viable[i]
             
-
-        # if too many possibilities, ask another letter
+                
+        print(f"Congrats! You win in {self.counter} moves.")
         
-        initial_prob = np.zeros((len(words)), dtype=float)
-        for i in range(len(viable[0])):
-            initial_prob[i] = 10 ** getBigramProb(n, f'<s> {viable[0][i]}')
-        initial_prob /= sum(initial_prob)
-        
-        
-        # define the transition matrix
-        transition_matrix = np.zeros((len(words), len(words)), dtype=float)
-        buf = 0
-        for i in range(len(viable)-1):
-            for j in range(len(viable[i])):
-                for k in range(len(viable[i+1])):
-                    transition_matrix[buf+j, buf+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
-                # normalize probabilities
-                transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
-            buf += len(viable[i])
-        
-        sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
-        
-        print(f"Most Likely Sequence: {sequence}")
-        for result in sequence:
-            print(words[result])
-        print(f"Probability: {prob}")
 
     def evaluate_available_words(self):
         viable = []
         for word in self.words:
-            viable.append(getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
+            viable.append(scripts.getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
         return viable
 
     def make_move(self, guess=""):
@@ -185,14 +163,12 @@ class Hangman():
         
         # correct guess
         if guess in self.secret and guess not in self.letters_used:
-            print(f"{colors.BOLD + colors.GREEN}Correct guess")
             self.letters_used += [guess]
             print(f"{colors.BOLD + colors.BLUE}Progress: {self.progress_updater(guess)}")
             print(f"{colors.BOLD + colors.YELLOW}Letters used: "+ (", ".join(self.letters_used)))
             
         # incorrect guess
         elif guess not in self.secret and guess not in self.letters_used:
-            print(f"{colors.BOLD + colors.RED}Incorrect guess")
             self.letters_used += [guess]
             print(f"{colors.BOLD + colors.BLUE}Progress: " + (" ".join(self.progress)))
             print(f"{colors.BOLD + colors.YELLOW}Letters used: "+ (", ".join(self.letters_used)))

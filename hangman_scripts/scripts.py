@@ -1,4 +1,5 @@
 import colors as bcolors
+import math
 
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
@@ -8,7 +9,7 @@ def matchesFilter(str, filter, used_letters):
         if letter in str: return False
     
     for i in range(len(str)):
-        if filter[i] == "?": 
+        if filter[i] == "█": 
             if str[i] in used_letters: return False
             continue
         
@@ -16,12 +17,22 @@ def matchesFilter(str, filter, used_letters):
     return True
 
 def getFilteredList(filter, wordlist, used_letters, printing):
-    newFilteredList = {k:v for k,v in wordlist.items() if matchesFilter(k, filter, used_letters)}
+    newFilteredList = [word for word in wordlist if matchesFilter(word, filter, used_letters)]
 
-    if len(newFilteredList.keys()) == 1:
-        if printing: print(f"{bcolors.BLUE+bcolors.BOLD}It must be {list(newFilteredList.keys())[0]}.")
-    elif len(newFilteredList.keys()) == 0:
-        if printing: print(f"{bcolors.RED+bcolors.BOLD}All options exhausted.")
-        return {}
+    if len(newFilteredList) == 0:
+        return []
     
     return newFilteredList
+
+def getEntropy(filteredList):
+    entropy = 0
+    total = 0
+
+    for freq in filteredList:
+        entropy -= freq * math.log2(freq)
+        total += freq
+
+    entropy /= total
+    entropy += math.log2(total)
+
+    return entropy
