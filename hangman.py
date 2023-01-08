@@ -94,8 +94,8 @@ class Hangman():
     
     def core_game_stage_one(self):
         for letter in self.order:
-            viable = self.evaluate_available_words()
-            if sum([len(wordlist) for wordlist in viable]) < 5000:
+            self.evaluate_available_words()
+            if sum([len(wordlist) for wordlist in self.viable]) < 5000:
                 print(f"{colors.BOLD + colors.GREEN}Stage 1 completed. Moving on to stage 2...")
                 return
             print(f"{colors.BOLD + colors.BLUE}STAGE ONE | Current Phrase: " + (" ".join(self.progress)))
@@ -106,48 +106,52 @@ class Hangman():
         
         while self.letters_left > 0:
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Analyzing state...")
-            viable = self.evaluate_available_words()
+            self.evaluate_available_words()
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Number of possibilities for each word:")
             words = []
-            emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
+            emission_matrix = np.zeros((sum([len(wordlist) for wordlist in self.viable]), len(self.viable)))
             
             info_list = {}
             
-            for i in range(len(viable)):
+            total_combinations = 1
+            
+            for i in range(len(self.viable)):
                 # create a unigram probability list
-                p = np.zeros((len(viable[i])), dtype=float)
-                for j in range(len(viable[i])):
-                    p[j] = 10 ** getUnigramProb(n, viable[i][j])
+                p = np.zeros((len(self.viable[i])), dtype=float)
+                for j in range(len(self.viable[i])):
+                    p[j] = 10 ** getUnigramProb(n, self.viable[i][j])
                 p /= sum(p)
                 
                 
                 e = scripts.getEntropy(p)
-                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(viable[i])} possibilities.")
+                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(self.viable[i])} possibilities.")
                 print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has an entropy of {e} bits.")
-                emission_matrix[len(words):len(words)+len(viable[i]), i] = 1
-                words += viable[i]
+                emission_matrix[len(words):len(words)+len(self.viable[i]), i] = 1
+                words += self.viable[i]
                 
-                new_list = scripts.calculate(self.words[i], viable[i], self.letters_used, p)
+                new_list = scripts.calculate(self.words[i], self.viable[i], self.letters_used, p)
                 info_list = {k: info_list.get(k, 0) + new_list.get(k, 0) for k in set(info_list) | set(new_list)}
+                
+                total_combinations *= len(self.viable[i])
             
             initial_prob = np.zeros((len(words)), dtype=float)
-            for i in range(len(viable[0])):
-                initial_prob[i] = 10 ** getBigramProb(n, f'<s> {viable[0][i]}')
+            for i in range(len(self.viable[0])):
+                initial_prob[i] = 10 ** getBigramProb(n, f'<s> {self.viable[0][i]}')
             initial_prob /= sum(initial_prob)
             
             
             # define the transition matrix
             transition_matrix = np.zeros((len(words), len(words)), dtype=float)
             buf = 0
-            for i in range(len(viable)-1):
-                for j in range(len(viable[i])):
-                    for k in range(len(viable[i+1])):
-                        transition_matrix[buf+j, buf+k+len(viable[i])] = 10 ** getBigramProb(n, ' '.join([viable[i][j], viable[i+1][k]]))
+            for i in range(len(self.viable)-1):
+                for j in range(len(self.viable[i])):
+                    for k in range(len(self.viable[i+1])):
+                        transition_matrix[buf+j, buf+k+len(self.viable[i])] = 10 ** getBigramProb(n, ' '.join([self.viable[i][j], self.viable[i+1][k]]))
                     # normalize probabilities
                     transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
-                buf += len(viable[i])
+                buf += len(self.viable[i])
             
-            sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
+            sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(self.viable))))
             
             
             seq = []
@@ -159,6 +163,12 @@ class Hangman():
             if prob > 0.95:
                 print(f"Guessing phrase {' '.join(seq)}")
                 break
+            
+            if total_combinations < 5000:
+                phrase, prob = self.core_game_stage_three()
+                if prob > 0.95:
+                    print(f"STAGE THREE | Guessing phrase {phrase}")
+                    break
             
             sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
             for i in reversed(range(len(sort.values()))):
@@ -174,12 +184,42 @@ class Hangman():
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
+    def core_game_stage_three(self):
+        phrases = []
+        gen = self.generatePhrase(0)
+        while True:
+            try: 
+                phrases += [next(gen).strip()]
+            except StopIteration:
+                break
+            
+        p = np.zeros((len(phrases)), dtype=float)
+            
+        for i in range(len(phrases)):
+            p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
+            
+        p /= sum(p)
+        
+        index = p.index(max(p))
+        
+        print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
+        
+        return phrases[index], p[index]
+        
+        
+    def generatePhrase(self, depth, current=''):
+        for word in self.viable[depth]:
+            if depth == 2:
+                yield current + ' ' + word
+            else:
+                yield from self.generatePhrase(depth + 1, current + ' ' + word)
+        
 
     def evaluate_available_words(self):
         viable = []
         for word in self.words:
             viable.append(scripts.getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
-        return viable
+        self.viable = viable
 
     def make_move(self, guess=""):
 
