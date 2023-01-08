@@ -134,6 +134,12 @@ class Hangman():
                 
                 total_combinations *= len(self.viable[i])
             
+            if total_combinations < 10000:
+                phrase, prob = self.core_game_stage_three()
+                if prob > 0.95:
+                    print(f"STAGE THREE | Guessing phrase {phrase}")
+                    break
+            
             initial_prob = np.zeros((len(words)), dtype=float)
             for i in range(len(self.viable[0])):
                 initial_prob[i] = 10 ** getBigramProb(n, f'<s> {self.viable[0][i]}')
@@ -164,11 +170,7 @@ class Hangman():
                 print(f"Guessing phrase {' '.join(seq)}")
                 break
             
-            if total_combinations < 10000:
-                phrase, prob = self.core_game_stage_three()
-                if prob > 0.95:
-                    print(f"STAGE THREE | Guessing phrase {phrase}")
-                    break
+            
             
             sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
             for i in reversed(range(len(sort.values()))):
