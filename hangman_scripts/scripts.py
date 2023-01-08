@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
@@ -23,11 +24,11 @@ def getFilteredList(filter, wordlist, used_letters):
     
     return newFilteredList
 
-def getEntropy(filteredList):
+def getEntropy(filtered_list):
     entropy = 0
     total = 0
 
-    for freq in filteredList:
+    for freq in filtered_list:
         entropy -= freq * math.log2(freq)
         total += freq
 
@@ -35,3 +36,62 @@ def getEntropy(filteredList):
     entropy += math.log2(total)
 
     return entropy
+
+def calculate(filter, wordlist, used_letters, p):
+
+    # calculate the current entropy of all possible items
+    currentEntropy = getEntropy(wordlist)
+
+    alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
+    entropyList = defaultdict(lambda: defaultdict(lambda: 0))
+    infoList = defaultdict(lambda: 0)
+
+    print(f"Current entropy: {currentEntropy} bits.")
+    
+    # sum up frequencies
+    for i in range(len(wordlist)):
+        
+        k = wordlist[i]
+        v = p[i]
+        # iterate through only unique characters
+        for letter in set(k):
+            # calculate the filter for that letter
+            pattern = ''.join([letter if letter == otherLetter else "█" for otherLetter in k])
+
+            # add the frequency value to this pattern to find total.
+            alphabetList[letter][pattern] += v
+
+            # initial calculation. need to divide by total and add log of total.
+            entropyList[letter][pattern] -= v * math.log2(v)
+
+    # total of all frequencies for normalization
+    allTotals = sum([sum(dictionary.values()) for dictionary in alphabetList.values()])
+
+    for letter, dictionary in alphabetList.items():
+
+        if letter in used_letters: continue
+
+        # sum of the totals for the letter
+        total = sum(dictionary.values())
+
+        expectedPresentEntropy = 0
+
+        for pattern, freq in dictionary.items():
+
+            # completes the entropy calculation.
+            entropyList[letter][pattern] /= freq
+            entropyList[letter][pattern] += math.log2(freq)
+            expectedPresentEntropy += freq / total * entropyList[letter][pattern]
+
+        # we've found expected entropy if the letter exists, now we must consider if it does not
+        temp_used_letters = used_letters + [letter]
+        absentFilteredList = getFilteredList(filter, wordlist, temp_used_letters)
+
+        expectedAbsentEntropy = 0
+        if absentFilteredList:
+            expectedAbsentEntropy = getEntropy(absentFilteredList)
+
+        # set the values for expected information gained
+        infoList[letter] = expectedPresentEntropy * total / allTotals + expectedAbsentEntropy * (allTotals - total) / allTotals
+
+    return infoList

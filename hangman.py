@@ -109,6 +109,9 @@ class Hangman():
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Number of possibilities for each word:")
             words = []
             emission_matrix = np.zeros((sum([len(wordlist) for wordlist in viable]), len(viable)))
+            
+            info_list = {}
+            
             for i in range(len(viable)):
                 # create a unigram probability list
                 p = [10 ** getUnigramProb(n, word) for word in viable[i]]
@@ -118,6 +121,9 @@ class Hangman():
                 print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has an entropy of {e} bits.")
                 emission_matrix[len(words):len(words)+len(viable[i]), i] = 1
                 words += viable[i]
+                
+                new_list = scripts.calculate(self.words[i], viable[i], self.letters_used, p)
+                info_list = {k: info_list.get(k, 0) + new_list.get(k, 0) for k in set(info_list) | set(new_list)}
             
             initial_prob = np.zeros((len(words)), dtype=float)
             for i in range(len(viable[0])):
@@ -142,6 +148,11 @@ class Hangman():
             for result in sequence:
                 print(words[result])
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Probability: {prob}")
+            
+            maxInfo = max(info_list.values())
+            maxInfoKey = max(info_list, key=info_list.get)
+            
+            print(f"{colors.CYAN+colors.BOLD}Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
             self.make_move()
                 
             
