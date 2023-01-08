@@ -118,6 +118,8 @@ class Hangman():
                 for j in range(len(viable[i])):
                     p[j] = 10 ** getUnigramProb(n, viable[i][j])
                 p /= sum(p)
+                print(f"Probabilities for word {self.words[i]}:")
+                print(p)
                 
                 
                 e = scripts.getEntropy(p)
