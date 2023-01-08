@@ -15,7 +15,7 @@ def matchesFilter(str, filter, used_letters):
         if filter[i] != str[i]: return False
     return True
 
-def getFilteredList(filter, wordlist, used_letters, printing):
+def getFilteredList(filter, wordlist, used_letters):
     newFilteredList = [word for word in wordlist if matchesFilter(word, filter, used_letters)]
 
     if len(newFilteredList) == 0:
