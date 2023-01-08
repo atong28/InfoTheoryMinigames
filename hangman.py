@@ -150,16 +150,25 @@ class Hangman():
             sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
             
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Most Likely Sequence")
+            seq = []
             for result in sequence:
-                print(words[result])
+                seq += [words[result]]
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Probability: {prob}")
             
-            maxInfo = max(info_list.values())
-            maxInfoKey = max(info_list, key=info_list.get)
+            if prob > 0.95:
+                print(f"Guessing phrase {' '.join(seq)}")
+                break
             
-            print(f"{colors.CYAN+colors.BOLD}Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
-            self.make_move()
-                
+            sorted = dict(sorted(info_list.items(), key=lambda item: item[1]))
+            for i in reversed(range(len(sorted.values()))):
+                k = sorted.keys()
+                # find the highest entropy as long as it is in the markov model
+                if k[i] in ''.join(seq):
+                    print(f"{colors.CYAN+colors.BOLD}Best letter is {k[i]}: Expected information gained is {sorted[k[i]]} bits.")
+                    self.make_move(k[i])
+                    break
+            
+            
             
                 
         print(f"Congrats! You win in {self.counter} moves.")
