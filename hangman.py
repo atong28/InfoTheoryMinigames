@@ -201,11 +201,13 @@ class Hangman():
             
         p /= sum(p)
         
-        searchDepth = (-1) * min(20, len(phrases))
+        searchDepth = (-1) * min(500, len(phrases))
         
         index = p.argsort()[searchDepth:][::-1]
         
-        info_list = scripts.calculate(''.join(self.progress), phrases, self.letters_used, p)
+        topPhrases = np.array(phrases, dtype=str)[index]
+        
+        info_list = scripts.calculate(''.join(self.progress), list(topPhrases), self.letters_used, p)
         
         for i in range(len(index)):
             print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
