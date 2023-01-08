@@ -134,7 +134,7 @@ class Hangman():
                 
                 total_combinations *= len(self.viable[i])
             
-            if total_combinations < 10000:
+            if total_combinations < 250000:
                 phrase, prob = self.core_game_stage_three()
                 if prob > 0.95:
                     print(f"STAGE THREE | Guessing phrase {phrase}")
