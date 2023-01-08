@@ -123,6 +123,8 @@ class Hangman():
                 words += viable[i]
                 
                 new_list = scripts.calculate(self.words[i], viable[i], self.letters_used, p)
+                print(f"Dictionary for word {self.words[i]}")
+                print(new_list)
                 info_list = {k: info_list.get(k, 0) + new_list.get(k, 0) for k in set(info_list) | set(new_list)}
             
             initial_prob = np.zeros((len(words)), dtype=float)
