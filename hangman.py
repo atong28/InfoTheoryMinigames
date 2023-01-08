@@ -161,7 +161,7 @@ class Hangman():
             
             sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
             for i in reversed(range(len(sort.values()))):
-                k = sort.keys()
+                k = list(sort.keys())
                 # find the highest entropy as long as it is in the markov model
                 if k[i] in ''.join(seq):
                     print(f"{colors.CYAN+colors.BOLD}Best letter is {k[i]}: Expected information gained is {sorted[k[i]]} bits.")
