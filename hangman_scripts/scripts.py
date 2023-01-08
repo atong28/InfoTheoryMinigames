@@ -94,9 +94,8 @@ def calculate(filter, wordlist, used_letters, p):
         for i in range(len(wordlist)):
             if wordlist[i] in absent_filtered_list:
                 ap[count] = p[i]
+                count += 1
         ap /= sum(ap)
-        
-        print(ap)
 
         expected_absent_entropy = 0
         if absent_filtered_list:
