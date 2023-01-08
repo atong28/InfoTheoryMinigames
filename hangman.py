@@ -178,7 +178,7 @@ class Hangman():
                 # find the highest entropy as long as it is in the markov model
                 if k[i] in ''.join(seq):
                     print(f"{colors.CYAN+colors.BOLD}Best letter is {k[i]}: Expected information gained is {sort[k[i]]} bits.")
-                    self.make_move(k[i])
+                    self.make_move()#k[i])
                     break
             
             
