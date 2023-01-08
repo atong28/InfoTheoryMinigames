@@ -46,7 +46,7 @@ def calculate(filter, wordlist, used_letters, p):
 
     alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
     entropyList = defaultdict(lambda: defaultdict(lambda: 0))
-    infoList = defaultdict(lambda: 0)
+    infoList = defaultdict(lambda: currentEntropy)
 
     print(f"Current entropy: {currentEntropy} bits.")
     
@@ -104,6 +104,6 @@ def calculate(filter, wordlist, used_letters, p):
         print(f"For letter {letter}, PE = {expected_present_entropy}, AE = {expected_absent_entropy}")
 
         # set the values for expected information gained
-        infoList[letter] = expected_present_entropy * total / all_totals + expected_absent_entropy * (all_totals - total) / all_totals
+        infoList[letter] -= expected_present_entropy * total / all_totals + expected_absent_entropy * (all_totals - total) / all_totals
 
     return infoList
