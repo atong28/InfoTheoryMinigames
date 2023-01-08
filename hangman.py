@@ -197,9 +197,10 @@ class Hangman():
             
         for i in range(len(phrases)):
             p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
-            if p[i] < 0.01: p[i] = 0
             
         p /= sum(p)
+        
+        np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
         searchDepth = (-1) * min(500, len(phrases))
         
