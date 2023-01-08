@@ -43,6 +43,8 @@ def calculate(filter, wordlist, used_letters, p):
 
     # calculate the current entropy of all possible items
     currentEntropy = getEntropy(p)
+    
+    print(f"Current Entropy: {currentEntropy}")
 
     alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
     entropyList = defaultdict(lambda: defaultdict(lambda: 0))
@@ -53,6 +55,8 @@ def calculate(filter, wordlist, used_letters, p):
         
         k = wordlist[i]
         v = p[i]
+        
+        if v == 0: continue
         # iterate through only unique characters
         for letter in set(k):
             # calculate the filter for that letter
@@ -77,7 +81,7 @@ def calculate(filter, wordlist, used_letters, p):
         expected_present_entropy = 0
 
         for pattern, freq in dictionary.items():
-
+            if freq == 0: continue
             # completes the entropy calculation.
             entropyList[letter][pattern] /= freq
             entropyList[letter][pattern] += math.log2(freq)
