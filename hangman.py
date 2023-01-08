@@ -202,13 +202,25 @@ class Hangman():
         
         p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
-        searchDepth = (-1) * min(500, len(phrases))
+        index = p.argsort()[:][::-1]
         
-        index = p.argsort()[searchDepth:][::-1]
+        p /= sum(p)
         
-        topPhrases = np.array(phrases, dtype=str)[index]
+        sorted_phrases = np.array(phrases, dtype=str)[index]
         
-        info_list = scripts.calculate(''.join(self.progress), list(topPhrases), self.letters_used, p)
+        sorted_p = p[index]
+        
+        d = {sorted_phrases[i]:sorted_p[i] for i in range(len(sorted_phrases)) if sorted_p[i] > 0}
+        
+        print(f"STAGE 3 Dict: {d}")
+        
+        
+        
+        top_phrases = np.array(list(d.keys()), dtype=str)
+        
+        top_probs = np.array(list(d.values()), dtype=float)
+        
+        info_list = scripts.calculate(''.join(self.progress), list(top_phrases), self.letters_used, top_probs)
         
         for i in range(min(30,len(index))):
             print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
