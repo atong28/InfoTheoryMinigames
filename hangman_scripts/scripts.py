@@ -40,7 +40,7 @@ def getEntropy(filtered_list):
 def calculate(filter, wordlist, used_letters, p):
 
     # calculate the current entropy of all possible items
-    currentEntropy = getEntropy(wordlist)
+    currentEntropy = getEntropy(p)
 
     alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
     entropyList = defaultdict(lambda: defaultdict(lambda: 0))
@@ -65,7 +65,7 @@ def calculate(filter, wordlist, used_letters, p):
             entropyList[letter][pattern] -= v * math.log2(v)
 
     # total of all frequencies for normalization
-    allTotals = sum([sum(dictionary.values()) for dictionary in alphabetList.values()])
+    all_totals = sum([sum(dictionary.values()) for dictionary in alphabetList.values()])
 
     for letter, dictionary in alphabetList.items():
 
@@ -74,24 +74,25 @@ def calculate(filter, wordlist, used_letters, p):
         # sum of the totals for the letter
         total = sum(dictionary.values())
 
-        expectedPresentEntropy = 0
+        expected_present_entropy = 0
 
         for pattern, freq in dictionary.items():
 
             # completes the entropy calculation.
             entropyList[letter][pattern] /= freq
             entropyList[letter][pattern] += math.log2(freq)
-            expectedPresentEntropy += freq / total * entropyList[letter][pattern]
+            expected_present_entropy += freq / total * entropyList[letter][pattern]
 
         # we've found expected entropy if the letter exists, now we must consider if it does not
         temp_used_letters = used_letters + [letter]
-        absentFilteredList = getFilteredList(filter, wordlist, temp_used_letters)
+        absent_filtered_list = getFilteredList(filter, wordlist, temp_used_letters)
+        ap = [p[i] for i in range(len(wordlist)) if wordlist[i] in absent_filtered_list]
 
-        expectedAbsentEntropy = 0
-        if absentFilteredList:
-            expectedAbsentEntropy = getEntropy(absentFilteredList)
+        expected_absent_entropy = 0
+        if absent_filtered_list:
+            expected_absent_entropy = getEntropy(ap)
 
         # set the values for expected information gained
-        infoList[letter] = expectedPresentEntropy * total / allTotals + expectedAbsentEntropy * (allTotals - total) / allTotals
+        infoList[letter] = expected_present_entropy * total / all_totals + expected_absent_entropy * (all_totals - total) / all_totals
 
     return infoList
