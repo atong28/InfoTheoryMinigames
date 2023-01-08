@@ -160,7 +160,7 @@ class Hangman():
                 break
             
             sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
-            for i in reversed(range(len(sorted.values()))):
+            for i in reversed(range(len(sort.values()))):
                 k = sort.keys()
                 # find the highest entropy as long as it is in the markov model
                 if k[i] in ''.join(seq):
