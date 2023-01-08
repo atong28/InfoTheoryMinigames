@@ -202,12 +202,12 @@ class Hangman():
         
         searchDepth = (-1) * min(10, len(phrases))
         
-        index = np.flip(np.argsort(p[np.argpartition(p, searchDepth)[searchDepth:]]))
+        index = p.argsort()[searchDepth:][::-1]
         
         # print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
         
         for i in range(len(index)):
-            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i} is {phrases[index[i]]} with probability {p[index[i]]}")
+            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
         
         return phrases[index[0]], p[index[0]]
         
