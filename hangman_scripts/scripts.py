@@ -102,6 +102,8 @@ def calculate(filter, wordlist, used_letters, p):
         expected_absent_entropy = 0
         if absent_filtered_list:
             expected_absent_entropy = getEntropy(ap)
+            
+        print(f"letter {letter} | pe: {expected_present_entropy}, ae: {expected_absent_entropy}")
 
         # set the values for expected information gained
         infoList[letter] -= expected_present_entropy * total / all_totals + expected_absent_entropy * (all_totals - total) / all_totals
