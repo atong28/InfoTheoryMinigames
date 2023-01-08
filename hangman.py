@@ -217,6 +217,8 @@ class Hangman():
         
         print(f"{colors.CYAN+colors.BOLD}Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
         
+        self.make_move()
+        
         return phrases[index[0]], p[index[0]]
         
         
