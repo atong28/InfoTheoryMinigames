@@ -210,7 +210,7 @@ class Hangman():
         
         info_list = scripts.calculate(''.join(self.progress), list(topPhrases), self.letters_used, p)
         
-        for i in range(min(20,len(index))):
+        for i in range(min(30,len(index))):
             print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
             
         maxInfo = max(info_list.values())
