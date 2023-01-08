@@ -164,7 +164,7 @@ class Hangman():
                 print(f"Guessing phrase {' '.join(seq)}")
                 break
             
-            if total_combinations < 5000:
+            if total_combinations < 10000:
                 phrase, prob = self.core_game_stage_three()
                 if prob > 0.95:
                     print(f"STAGE THREE | Guessing phrase {phrase}")
@@ -200,11 +200,16 @@ class Hangman():
             
         p /= sum(p)
         
-        index = p.argmax()
+        searchDepth = (-1) * min(10, len(phrases))
         
-        print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
+        index = np.flip(np.argsort(p[np.argpartition(p, searchDepth)[searchDepth:]]))
         
-        return phrases[index], p[index]
+        # print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
+        
+        for i in range(len(index)):
+            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i} is {phrases[index[i]]} with probability {p[index[i]]}")
+        
+        return phrases[index[0]], p[index[0]]
         
         
     def generatePhrase(self, depth, current=''):
