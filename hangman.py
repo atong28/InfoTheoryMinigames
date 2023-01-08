@@ -196,11 +196,12 @@ class Hangman():
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
+            print(f"Checking phrase {phrases[i]}")
             p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
             
         p /= sum(p)
         
-        index = p.index(max(p))
+        index = p.argmax()
         
         print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index]} with probability {p[index]}.")
         
