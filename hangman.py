@@ -198,7 +198,7 @@ class Hangman():
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
-            p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
+            p[i] = 20 ** getSentenceProb(n, phrases[i], len(self.words))
             
         p /= sum(p)
         
