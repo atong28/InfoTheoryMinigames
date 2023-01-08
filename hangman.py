@@ -125,7 +125,6 @@ class Hangman():
                 
                 e = scripts.getEntropy(p)
                 print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(self.viable[i])} possibilities.")
-                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has an entropy of {e} bits.")
                 emission_matrix[len(words):len(words)+len(self.viable[i]), i] = 1
                 words += self.viable[i]
                 
@@ -198,10 +197,11 @@ class Hangman():
             
         for i in range(len(phrases)):
             p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
+            if p[i] < 0.01: p[i] = 0
             
         p /= sum(p)
         
-        searchDepth = (-1) * min(20, len(phrases))
+        searchDepth = (-1) * min(500, len(phrases))
         
         index = p.argsort()[searchDepth:][::-1]
         
