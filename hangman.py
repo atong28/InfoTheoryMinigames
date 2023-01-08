@@ -196,7 +196,6 @@ class Hangman():
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
-            print(f"Checking phrase {phrases[i]}")
             p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
             
         p /= sum(p)
@@ -210,7 +209,7 @@ class Hangman():
         
     def generatePhrase(self, depth, current=''):
         for word in self.viable[depth]:
-            if depth == 2:
+            if depth == len(self.words) - 1:
                 yield current + ' ' + word
             else:
                 yield from self.generatePhrase(depth + 1, current + ' ' + word)
