@@ -117,7 +117,7 @@ class Hangman():
                 p = np.zeros((len(viable[i])), dtype=float)
                 for j in range(len(viable[i])):
                     p[j] = 10 ** getUnigramProb(n, viable[i][j])
-                p[j] /= sum(p[j])
+                p /= sum(p)
                 
                 
                 e = scripts.getEntropy(p)
