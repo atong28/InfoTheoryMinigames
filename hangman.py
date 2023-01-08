@@ -149,10 +149,11 @@ class Hangman():
             
             sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(viable))))
             
-            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Most Likely Sequence")
+            
             seq = []
             for result in sequence:
                 seq += [words[result]]
+            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Most Likely Sequence: {' '.join(seq)}")
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Probability: {prob}")
             
             if prob > 0.95:
