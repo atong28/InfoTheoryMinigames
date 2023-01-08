@@ -1,4 +1,3 @@
-import colors as bcolors
 import math
 
 def matchesFilter(str, filter, used_letters):
