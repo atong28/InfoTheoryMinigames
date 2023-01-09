@@ -74,6 +74,7 @@ class Hangman():
 
             # print result
             print(f"{colors.CYAN+colors.BOLD}Best letter is {max_info_key}: Expected information gained is {max_info} bits.")
+            self.make_move()
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
