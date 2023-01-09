@@ -73,6 +73,7 @@ class Hangman():
                 return
             print(f"{colors.BOLD + colors.BLUE}Current Phrase: " + (" ".join(self.progress)))
             self.make_move(letter)
+            print(self.words)
     
     ############################################################################
     # Runs Stage 2 of the game.                                                #
@@ -155,20 +156,18 @@ class Hangman():
         p /= sum(p)
         
         # cut off anything less than 0.01
-        #p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
+        p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
         # find sorted index
         index = p.argsort()[:][::-1]
         
         # re-normalize with the new truncated array
-        #p /= sum(p)
+        p /= sum(p)
         
         # define the new sorted, truncated arrays
         sorted_phrases = np.array(phrases, dtype=str)[index]
         sorted_p = p[index]
         d = {sorted_phrases[i]:sorted_p[i] for i in range(len(sorted_phrases)) if sorted_p[i] > 0}
-        
-        print(d)
         
         # format for entropy calculation
         top_phrases = np.array(list(d.keys()), dtype=str)
