@@ -200,5 +200,4 @@ if __name__ == '__main__':
 
     readLM(n, "bnc-pruned-3.lm")
     print(f"{colors.BOLD + colors.GREEN}Data loaded!")
-    secret = input("What is the secret? Enter here: ")
-    game = Hangman(secret.lower())
+    game = Hangman()
