@@ -213,12 +213,12 @@ class Hangman():
         else:
             print(f"{colors.BOLD + colors.RED}Already used or invalid. Try again")
             self.counter -= 1
-
+        self.words = ''.join(self.progress).split(' ')
+        if self.progress[-1] in '.?!':
+            self.words[-1] = self.words[-1][:-1]
         for i in range(len(self.progress)):
             if self.progress[i] == "'":
                 self.words = ''.join(self.progress[:i] + [' '] + self.progress[i:]).split(' ')
-            elif self.progress[i] in '.?!':
-                self.words[-1] = self.words[-1][:-1]
             elif self.progress[i] == ",":
                 self.words = ''.join(self.progress[:i] + self.progress[i+1:]).split(' ')
     
