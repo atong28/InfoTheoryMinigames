@@ -120,9 +120,9 @@ class Hangman():
         
         print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
         
-        print(info_list)
-        
         self.make_move()
+        
+        print(p[index[0]])
         
         return phrases[index[0]], p[index[0]]
         
