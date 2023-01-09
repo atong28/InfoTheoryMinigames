@@ -178,8 +178,8 @@ class Hangman():
         
         print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index[0]]} with probability {p[index[0]]}.")
         
-        # if phrase is 95% certain to be correct, guess it
-        if p[index[0]] > 0.95:
+        # if phrase is 98% certain to be correct, guess it
+        if p[index[0]] > 0.98:
             phrase = phrases[index[0]]
             i = 0
             while i < len(phrase):
