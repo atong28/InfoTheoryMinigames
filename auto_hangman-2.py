@@ -29,7 +29,7 @@ class Hangman():
     ############################################################################
     def __init__(self, length):
         self.can_lie = True
-        self.counter = 1
+        self.counter = 2
         self.letters_used = []
         self.length = length
         self.letters_left = length
