@@ -56,9 +56,9 @@ And I pruned the LM of low probability words with:
 
 We now have an ARPA LM stored as the file `bnc-pruned.lm`.
 
-### HMM
+### Calculation
 
-From this point on, we will use the calculated bigram and unigram logprobs to calculate the transition matrices.
+From this point on, we will use the calculated bigram and unigram logprobs for our entropy calculation.
 
 Calculate probabilities with SRILM:
 ```ngram -lm bnc-pruned.lm -order 2 -ppl test.txt -debug 2```
