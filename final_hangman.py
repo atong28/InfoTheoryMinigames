@@ -227,7 +227,6 @@ class Hangman():
     def evaluate_available_words(self):
         viable = []
         for word in self.words:
-            print(f"Finding words matching {word}")
             viable.append(scripts.getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
         self.viable = viable
 
