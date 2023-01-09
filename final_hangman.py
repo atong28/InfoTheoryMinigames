@@ -19,6 +19,8 @@ class Hangman():
 
         self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
         
+        self.fails = []
+        
         print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
         self.make_move(" ", False, "blank")
         print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
@@ -99,6 +101,10 @@ class Hangman():
             except StopIteration:
                 break
             
+        for failed_phrase in self.fails:
+            if failed_phrase in phrases:
+                phrases.remove(failed_phrase)
+            
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
@@ -125,6 +131,7 @@ class Hangman():
         info_list = scripts.calculate(''.join(self.progress), list(top_phrases), self.letters_used, top_probs)
         
         for i in range(min(10,len(index))):
+            if p[index[i]] == 0: continue
             print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
             
         maxInfo = max(info_list.values())
@@ -133,8 +140,12 @@ class Hangman():
         print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
         
         if p[index[0]] > 0.95:
-            print(f"STAGE THREE | Guessing phrase {phrases[index[0]]}")
-            return True
+            result = input(f"STAGE THREE | Is the phrase {phrases[index[0]]}? ")
+            if result == 'Y':
+                return True
+            self.fails += [phrases[index[0]]]
+            self.counter += 3
+            return False
         
         self.make_move(maxInfoKey)
         
