@@ -24,7 +24,7 @@ class Hangman():
         self.make_move("'", False)
         for i in range(len(self.progress)):
             if self.progress[i] == "'":
-                self.progress = self.progress[:i] + ' ' + self.progress[i:]
+                self.progress = self.progress[:i] + [' '] + self.progress[i:]
         self.make_move(".", False)
         if self.progress[-1] == "█":
             self.make_move("?", False)
