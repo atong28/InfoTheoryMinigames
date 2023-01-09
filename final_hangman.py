@@ -16,6 +16,7 @@ n = initLM(5)
 # ---------------------------------------------------------------------------- #
 # can_lie: True if a lie has not yet been spoken.                              #
 # counter: Stores the number of moves.                                         #
+# length: Stores the length of the overall phrase.                             #
 # letters_used: Stores the letters used, including punctuation.                #
 # progress: List of characters in the phrase, with █ as the unknown character. #
 # order: A few preset letters that motivates stage one.                        #
@@ -30,7 +31,7 @@ class Hangman():
         self.can_lie = True
         self.counter = 1
         self.letters_used = []
-        
+        self.length = length
         self.letters_left = length
         self.progress = ["█"] * self.letters_left
 
@@ -178,7 +179,17 @@ class Hangman():
         
         # if phrase is 95% certain to be correct, guess it
         if p[index[0]] > 0.95:
-            result = input(f"Guess #{self.counter} | Is the phrase '{phrases[index[0]]}'? ")
+            phrase = phrases[index[0]]
+            for i in range(len(phrase)):
+                if phrase[i] == "'":
+                    phrase = phrase[:i-1] + phrase[i:]
+                elif self.progress[i] == ",":
+                    phrase = phrase[:i] + "," + phrase[i:]
+
+            # if there is punctuation, add it
+            if len(phrase) + 1 == self.length:
+                phrase += self.progress[-1]
+            result = input(f"Guess #{self.counter} | Is the phrase '{phrase}'? ")
             # correct guess
             if result == 'Y':
                 return True
