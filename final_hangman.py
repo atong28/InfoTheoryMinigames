@@ -181,11 +181,14 @@ class Hangman():
         # if phrase is 95% certain to be correct, guess it
         if p[index[0]] > 0.95:
             phrase = phrases[index[0]]
-            for i in range(len(phrase)):
+            while i < len(phrase):
                 if phrase[i] == "'":
                     phrase = phrase[:i-1] + phrase[i:]
+                    i -= 1
                 elif self.progress[i] == ",":
                     phrase = phrase[:i] + "," + phrase[i:]
+                    i += 1
+                i += 1
 
             # if there is punctuation, add it
             if len(phrase) + 1 == self.length:
