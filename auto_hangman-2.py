@@ -208,7 +208,7 @@ class Hangman():
         for i in reversed(range(len(sort.values()))):
             k = list(sort.keys())
             # find the highest entropy as long as it is in the markov model
-            if k[i] in p[index[0]]:
+            if k[i] in phrases[index[0]]:
                 print(f"{colors.CYAN+colors.BOLD}Best letter is {k[i]}: Expected information gained is {sort[k[i]]} bits.")
                 self.make_move(k[i])
                 break
