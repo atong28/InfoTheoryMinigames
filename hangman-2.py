@@ -63,7 +63,8 @@ class Hangman():
                 total_combinations *= len(self.viable[i])
             
             if total_combinations < 2500000:
-                self.core_game_stage_three()
+                if self.core_game_stage_three():
+                    break
                 continue         
             
             max_info = max(info_list.values())
@@ -119,9 +120,11 @@ class Hangman():
         
         if p[index[0]] > 0.95:
             print(f"STAGE THREE | Guessing phrase {phrases[index[0]]}")
-            return
+            return True
         
         self.make_move()
+        
+        return False
         
         
     def generatePhrase(self, depth, current=''):
