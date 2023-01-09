@@ -181,6 +181,7 @@ class Hangman():
         # if phrase is 95% certain to be correct, guess it
         if p[index[0]] > 0.95:
             phrase = phrases[index[0]]
+            i = 0
             while i < len(phrase):
                 if phrase[i] == "'":
                     phrase = phrase[:i-1] + phrase[i:]
