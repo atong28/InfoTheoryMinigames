@@ -37,26 +37,26 @@ class Hangman():
                 self.make_move("!", False, "exclamation mark")
                 print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
         
+        print(f"{colors.BOLD + colors.BLUE}Entering Stage 1...")
         self.core_game_stage_one()
         
+        print(f"{colors.BOLD + colors.BLUE}Entering Stage 2...")
         self.core_game_stage_two()
     
     def core_game_stage_one(self):
         for letter in self.order:
             self.evaluate_available_words()
-            if sum([len(wordlist) for wordlist in self.viable]) < 5000:
-                print(f"{colors.BOLD + colors.GREEN}Stage 1 completed. Moving on to stage 2...")
+            if sum([len(wordlist) for wordlist in self.viable]) < 50000:
                 return
-            print(f"{colors.BOLD + colors.BLUE}STAGE ONE | Current Phrase: " + (" ".join(self.progress)))
+            print(f"{colors.BOLD + colors.BLUE}Current Phrase: " + (" ".join(self.progress)))
             self.make_move(letter)
     
     def core_game_stage_two(self):
-        print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Current Phrase: " + (" ".join(self.progress)))
+        
         
         while self.letters_left > 0:
-            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Analyzing state...")
+            print(f"{colors.BOLD + colors.BLUE}Current Phrase: " + (" ".join(self.progress)))
             self.evaluate_available_words()
-            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Number of possibilities for each word:")
             words = []
             
             info_list = {}
@@ -69,8 +69,7 @@ class Hangman():
                 for j in range(len(self.viable[i])):
                     p[j] = 10 ** getUnigramProb(n, self.viable[i][j])
                 p /= sum(p)
-                
-                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(self.viable[i])} possibilities.")
+
                 words += self.viable[i]
                 
                 new_list = scripts.calculate(self.words[i], self.viable[i], self.letters_used, p)
@@ -82,17 +81,15 @@ class Hangman():
                 if self.core_game_stage_three():
                     break
                 continue         
-            
-            max_info = max(info_list.values())
+
             max_info_key = max(info_list, key=info_list.get)
 
-            # print result
-            print(f"{colors.CYAN+colors.BOLD}Best letter is {max_info_key}: Expected information gained is {max_info} bits.")
             self.make_move(max_info_key)
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
     def core_game_stage_three(self):
+        print(f"{colors.BOLD + colors.BLUE}Entering Stage 3...")
         phrases = []
         gen = self.generatePhrase(0)
         while True:
@@ -130,22 +127,17 @@ class Hangman():
         
         info_list = scripts.calculate(''.join(self.progress), list(top_phrases), self.letters_used, top_probs)
         
-        '''for i in range(min(10,len(index))):
-            if p[index[i]] == 0: continue
-            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")'''
-            
-        maxInfo = max(info_list.values())
+        print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index[0]]} with probability {p[index[0]]}.")
+
         maxInfoKey = max(info_list, key=info_list.get)
         
         if p[index[0]] > 0.95:
-            result = input(f"Guess #{self.counter} | Is the phrase {phrases[index[0]]}? ")
+            result = input(f"Guess #{self.counter} | Is the phrase '{phrases[index[0]]}'? ")
             if result == 'Y':
                 return True
             self.fails += [phrases[index[0]]]
             self.counter += 3
             return False
-        
-        '''print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")'''
         
         self.make_move(maxInfoKey)
         
@@ -169,7 +161,7 @@ class Hangman():
     def make_move(self, guess, can_lie=True, custom_name=''):
 
         print(f'''Letters Guessed: "{'", "'.join(self.letters_used)}"''')
-        question = f"Guess #{self.counter}: Is there a {guess}?"
+        question = f"Guess #{self.counter}: Is there a {guess}? "
         if custom_name:
             question = f"Guess #{self.counter}: Is there a {custom_name}?"
 
