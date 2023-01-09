@@ -286,7 +286,7 @@ class Hangman():
             if "," in self.words[i]:
                 self.words[i] = self.words[i][:-1]
                 
-        if self.progress[-1] in '.?!':
+        if self.words[-1][-1] in '.?!':
             self.words[-1] = self.words[-1][:-1]
     
     # update the progress left
