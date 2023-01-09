@@ -5,7 +5,7 @@ from srilm import *
 
 VOCAB = defaultdict(lambda: [])
 np.set_printoptions(precision=3)
-n = initLM(2)
+n = initLM(5)
 
 class Hangman():
 
