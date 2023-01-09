@@ -130,22 +130,22 @@ class Hangman():
         
         info_list = scripts.calculate(''.join(self.progress), list(top_phrases), self.letters_used, top_probs)
         
-        for i in range(min(10,len(index))):
+        '''for i in range(min(10,len(index))):
             if p[index[i]] == 0: continue
-            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")
+            print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Likely phrase #{i+1} is {phrases[index[i]]} with probability {p[index[i]]}")'''
             
         maxInfo = max(info_list.values())
         maxInfoKey = max(info_list, key=info_list.get)
         
-        print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")
-        
         if p[index[0]] > 0.95:
-            result = input(f"STAGE THREE | Is the phrase {phrases[index[0]]}? ")
+            result = input(f"Guess #{self.counter} | Is the phrase {phrases[index[0]]}? ")
             if result == 'Y':
                 return True
             self.fails += [phrases[index[0]]]
             self.counter += 3
             return False
+        
+        '''print(f"{colors.CYAN+colors.BOLD}STAGE THREE | Best letter is {maxInfoKey}: Expected information gained is {maxInfo} bits.")'''
         
         self.make_move(maxInfoKey)
         
@@ -168,6 +168,7 @@ class Hangman():
 
     def make_move(self, guess, can_lie=True, custom_name=''):
 
+        print(f'''Letters Guessed: "{'", "'.join(self.letters_used)}"''')
         question = f"Guess #{self.counter}: Is there a {guess}?"
         if custom_name:
             question = f"Guess #{self.counter}: Is there a {custom_name}?"
