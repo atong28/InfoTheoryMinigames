@@ -200,4 +200,5 @@ if __name__ == '__main__':
 
     readLM(n, "bnc-pruned-3.lm")
     print(f"{colors.BOLD + colors.GREEN}Data loaded!")
-    game = Hangman()
+    length = int(input(f"How many characters are there in this phrase? ").strip())
+    game = Hangman(length)
