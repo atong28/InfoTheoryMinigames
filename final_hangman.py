@@ -19,17 +19,24 @@ class Hangman():
 
         self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
         
-        self.make_move(" ", False)
-        self.make_move(",", False)
-        self.make_move("'", False)
+        print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
+        self.make_move(" ", False, "blank")
+        print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
+        self.make_move(",", False, "comma")
+        print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
+        self.make_move("'", False, "apostrophe")
         for i in range(len(self.progress)):
             if self.progress[i] == "'":
-                self.progress = self.progress[:i] + [' '] + self.progress[i:]
-        self.make_move(".", False)
+                self.words = ''.join(self.progress[:i] + [' '] + self.progress[i:]).split(' ')
+        print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
+        self.make_move(".", False, "period")
+        print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
         if self.progress[-1] == "█":
-            self.make_move("?", False)
+            self.make_move("?", False, "question mark")
+            print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
             if self.progress[-1] == "█":
-                self.make_move("!", False)
+                self.make_move("!", False, "exclamation mark")
+                print(f"{colors.BOLD + colors.BLUE}STAGE ZERO | Current Phrase: " + (" ".join(self.progress)))
         
         self.core_game_stage_one()
         
@@ -151,21 +158,25 @@ class Hangman():
             viable.append(scripts.getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
         self.viable = viable
 
-    def make_move(self, guess, can_lie=True):
+    def make_move(self, guess, can_lie=True, custom_name=''):
 
-        answer = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+        question = f"Guess #{self.counter}: Is there a {guess}?"
+        if custom_name:
+            question = f"Guess #{self.counter}: Is there a {custom_name}?"
+
+        answer = input(question).strip()
         self.counter += 1
         
         self.letters_used += [guess]
         
         if answer == 'N':
             if self.can_lie and can_lie:
-                answer_check = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                answer_check = input(question).strip()
                 self.counter += 1
                 # lie has occurred
                 if answer_check != answer:
                     self.can_lie = False
-                    answer_final = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                    answer_final = input(question).strip()
                     self.counter += 1
                     # first one is a lie, second one was the truth, so give positions; else, if first was truth, do nothing
                     if answer_check == answer_final: 
@@ -176,12 +187,12 @@ class Hangman():
             
             # if only 1 position, could be a lie; if 2+ positions, cannot be a lie
             if len(positions) == 1 and self.can_lie and can_lie:
-                answer_check = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                answer_check = input(question).strip()
                 self.counter += 1
                 # lie has occurred
                 if answer_check != answer:
                     self.can_lie = False
-                    answer_final = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                    answer_final = input(question).strip()
                     self.counter += 1
                     # first one is a lie, second one was the truth; else, if first was truth, positions is correct
                     if answer_check == answer_final: 
