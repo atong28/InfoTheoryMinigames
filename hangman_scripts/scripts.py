@@ -43,8 +43,6 @@ def calculate(filter, wordlist, used_letters, p):
 
     # calculate the current entropy of all possible items
     currentEntropy = getEntropy(p)
-    
-    print(f"Current Entropy: {currentEntropy}")
 
     alphabetList = defaultdict(lambda: defaultdict(lambda: 0))
     entropyList = defaultdict(lambda: defaultdict(lambda: 0))
@@ -67,10 +65,6 @@ def calculate(filter, wordlist, used_letters, p):
 
             # initial calculation. need to divide by total and add log of total.
             entropyList[letter][pattern] -= v * math.log2(v)
-
-    # total of all frequencies for normalization
-    all_totals = sum([sum(dictionary.values()) for dictionary in alphabetList.values()])
-    print(f"All total: {all_totals}")
 
     for letter, dictionary in alphabetList.items():
 
@@ -103,8 +97,6 @@ def calculate(filter, wordlist, used_letters, p):
         expected_absent_entropy = 0
         if absent_filtered_list:
             expected_absent_entropy = getEntropy(ap)
-            
-        print(f"letter {letter} | pe: {expected_present_entropy}, ae: {expected_absent_entropy}")
 
         # set the values for expected information gained
         infoList[letter] -= expected_present_entropy * total + expected_absent_entropy * (1 - total)

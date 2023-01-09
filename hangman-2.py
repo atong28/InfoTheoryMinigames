@@ -2,73 +2,6 @@ from hangman_scripts import colors, scripts
 from collections import defaultdict
 import numpy as np
 from srilm import *
-import pprint
-
-def step(mu_prev: np.ndarray,
-         emission_probs: np.ndarray,
-         transition_probs: np.ndarray,
-         observed_state: int) -> tuple[np.ndarray, np.ndarray]:
-    """Runs one step of the Viterbi algorithm.
-    
-    Args:
-        mu_prev: probability distribution with shape (num_hidden),
-            the previous mu
-        emission_probs: the emission probability matrix (num_hidden,
-            num_observed)
-        transition_probs: the transition probability matrix, with
-            shape (num_hidden, num_hidden)
-        observed_state: the observed state at the current step
-    
-    Returns:
-        - the mu for the next step
-        - the maximizing previous state, before the current state,
-          as an int array with shape (num_hidden)
-    """
-    
-    pre_max = mu_prev * transition_probs.T
-    max_prev_states = np.argmax(pre_max, axis=1)
-    max_vals = pre_max[np.arange(len(max_prev_states)), max_prev_states]
-    mu_new = max_vals * emission_probs[:, observed_state]
-    
-    return mu_new, max_prev_states
-
-
-def viterbi(emission_probs: np.ndarray,
-            transition_probs: np.ndarray,
-            start_probs: np.ndarray,
-            observed_states: list[int]) -> tuple[list[int], float]:
-    """Runs the Viterbi algorithm to get the most likely state sequence.
-    
-    Args:
-        emission_probs: the emission probability matrix (num_hidden,
-            num_observed)
-        transition_probs: the transition probability matrix, with
-            shape (num_hidden, num_hidden)
-        start_probs: the initial probabilies for each state, with shape
-            (num_hidden)
-        observed_states: the observed states at each step
-    
-    Returns:
-        - the most likely series of states
-        - the joint probability of that series of states and the observed
-    """
-    
-    # Runs the forward pass, storing the most likely previous state.
-    mu = start_probs * emission_probs[:, observed_states[0]]
-    all_prev_states = []
-    for observed_state in observed_states[1:]:
-        mu, prevs = step(mu, emission_probs, transition_probs, observed_state)
-        all_prev_states.append(prevs)
-    
-    # Traces backwards to get the maximum likelihood sequence.
-    state = np.argmax(mu)
-    sequence_prob = mu[state]
-    state_sequence = [state]
-    for prev_states in all_prev_states[::-1]:
-        state = prev_states[state]
-        state_sequence.append(state)
-    
-    return state_sequence[::-1], sequence_prob
 
 VOCAB = defaultdict(lambda: [])
 np.set_printoptions(precision=3)
@@ -109,7 +42,6 @@ class Hangman():
             self.evaluate_available_words()
             print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Number of possibilities for each word:")
             words = []
-            emission_matrix = np.zeros((sum([len(wordlist) for wordlist in self.viable]), len(self.viable)))
             
             info_list = {}
             
@@ -123,7 +55,6 @@ class Hangman():
                 p /= sum(p)
                 
                 print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(self.viable[i])} possibilities.")
-                emission_matrix[len(words):len(words)+len(self.viable[i]), i] = 1
                 words += self.viable[i]
                 
                 new_list = scripts.calculate(self.words[i], self.viable[i], self.letters_used, p)
@@ -136,49 +67,13 @@ class Hangman():
                 if prob > 0.95:
                     print(f"STAGE THREE | Guessing phrase {phrase}")
                     break
-                continue
+                continue         
             
-            initial_prob = np.zeros((len(words)), dtype=float)
-            for i in range(len(self.viable[0])):
-                initial_prob[i] = 10 ** getBigramProb(n, f'<s> {self.viable[0][i]}')
-            initial_prob /= sum(initial_prob)
-            
-            
-            # define the transition matrix
-            transition_matrix = np.zeros((len(words), len(words)), dtype=float)
-            buf = 0
-            for i in range(len(self.viable)-1):
-                for j in range(len(self.viable[i])):
-                    for k in range(len(self.viable[i+1])):
-                        transition_matrix[buf+j, buf+k+len(self.viable[i])] = 10 ** getBigramProb(n, ' '.join([self.viable[i][j], self.viable[i+1][k]]))
-                    # normalize probabilities
-                    transition_matrix[buf+j] /= sum(transition_matrix[buf+j])
-                buf += len(self.viable[i])
-            
-            sequence, prob = viterbi(emission_matrix, transition_matrix, initial_prob, list(range(len(self.viable))))
-            
-            
-            seq = []
-            for result in sequence:
-                seq += [words[result]]
-            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Most Likely Sequence: {' '.join(seq)}")
-            print(f"{colors.BOLD + colors.BLUE}STAGE TWO | Probability: {prob}")
-            
-            if prob > 0.95:
-                print(f"Guessing phrase {' '.join(seq)}")
-                break
-            
-            sort = dict(sorted(info_list.items(), key=lambda item: item[1]))
-            for i in reversed(range(len(sort.values()))):
-                k = list(sort.keys())
-                # find the highest entropy as long as it is in the markov model
-                if k[i] in ''.join(seq):
-                    print(f"{colors.CYAN+colors.BOLD}STAGE TWO | Best letter is {k[i]}: Expected information gained is {sort[k[i]]} bits.")
-                    self.make_move()
-                    break
-            
-            
-            
+            max_info = max(info_list.values())
+            max_info_key = max(info_list, key=info_list.get)
+
+            # print result
+            print(f"{colors.CYAN+colors.BOLD}Best letter is {max_info_key}: Expected information gained is {max_info} bits.")
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
