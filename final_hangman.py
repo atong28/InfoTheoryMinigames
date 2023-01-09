@@ -282,8 +282,8 @@ class Hangman():
         self.words = ''.join(self.progress).split(' ')
         for i in range(len(self.words)):
             if "'" in self.words[i]:
-                self.words[i] = ''.join(self.words[:i] + [' '] + self.words[i:]).split(' ')[0]
-                self.words.insert(i+1, ''.join(self.words[:i] + [' '] + self.words[i:]).split(' ')[1])
+                self.words[i] = self.words[:i]
+                self.words.insert(i+1, self.words[i:])
             if "," in self.words[i]:
                 self.words[i] = self.words[i][:-1]
                 
