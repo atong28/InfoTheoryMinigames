@@ -89,6 +89,7 @@ class Hangman():
             
             for i in range(len(self.viable)):
                 # create a unigram probability list
+                print(f"{colors.BOLD + colors.YELLOW}STAGE TWO | {self.words[i]} has {len(self.viable[i])} possibilities.")
                 p = np.zeros((len(self.viable[i])), dtype=float)
                 for j in range(len(self.viable[i])):
                     p[j] = 10 ** getUnigramProb(n, self.viable[i][j])
@@ -221,7 +222,7 @@ class Hangman():
         print(f'''Letters Guessed: "{'", "'.join(self.letters_used)}"''')
         question = f"Guess #{self.counter}: Is there a {guess}? "
         if custom_name:
-            question = f"Guess #{self.counter}: Is there a {custom_name}?"
+            question = f"Guess #{self.counter}: Is there a {custom_name}? "
 
         # Q1
         answer = input(question).strip()
