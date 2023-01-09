@@ -72,7 +72,7 @@ class Hangman():
 
             # print result
             print(f"{colors.CYAN+colors.BOLD}Best letter is {max_info_key}: Expected information gained is {max_info} bits.")
-            self.make_move()
+            self.make_move(max_info_key)
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
@@ -122,7 +122,7 @@ class Hangman():
             print(f"STAGE THREE | Guessing phrase {phrases[index[0]]}")
             return True
         
-        self.make_move()
+        self.make_move(maxInfoKey)
         
         return False
         
