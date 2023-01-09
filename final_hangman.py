@@ -286,7 +286,7 @@ class Hangman():
                 self.words[i] = word[:i]
                 self.words.insert(i+1, word[i:])
             if "," in word:
-                self.words[i] = word[i][:-1]
+                self.words[i] = word[:-1]
                 
         if self.words[-1][-1] in '.?!':
             self.words[-1] = self.words[-1][:-1]
