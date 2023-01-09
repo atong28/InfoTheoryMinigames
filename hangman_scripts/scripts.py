@@ -33,7 +33,9 @@ def getEntropy(filtered_list):
         if freq != 0:
             entropy -= freq * math.log2(freq)
             total += freq
-
+    if total == 0:
+        print("Impossible sequence found.")
+        return 0
     entropy /= total
     entropy += math.log2(total)
 
