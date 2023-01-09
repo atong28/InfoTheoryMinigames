@@ -143,18 +143,20 @@ class Hangman():
 
     def make_move(self, guess, can_lie=True):
 
-        answer = input(f"Guess #{self.count}: Is there a {guess}?").strip()
+        answer = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
         self.counter += 1
         
         self.letters_used += [guess]
         
         if answer == 'N':
             if self.can_lie and can_lie:
-                answer_check = input(f"Guess #{self.count}: Is there a {guess}?").strip()
+                answer_check = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                self.counter += 1
                 # lie has occurred
                 if answer_check != answer:
                     self.can_lie = False
-                    answer_final = input(f"Guess #{self.count}: Is there a {guess}?").strip()
+                    answer_final = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                    self.counter += 1
                     # first one is a lie, second one was the truth, so give positions; else, if first was truth, do nothing
                     if answer_check == answer_final: 
                         positions = [int(pos.strip()) for pos in answer_check.split(',')[1:]]
@@ -164,11 +166,13 @@ class Hangman():
             
             # if only 1 position, could be a lie; if 2+ positions, cannot be a lie
             if len(positions == 1) and self.can_lie and can_lie:
-                answer_check = input(f"Guess #{self.count}: Is there a {guess}?").strip()
+                answer_check = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                self.counter += 1
                 # lie has occurred
                 if answer_check != answer:
                     self.can_lie = False
-                    answer_final = input(f"Guess #{self.count}: Is there a {guess}?").strip()
+                    answer_final = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
+                    self.counter += 1
                     # first one is a lie, second one was the truth; else, if first was truth, positions is correct
                     if answer_check == answer_final: 
                         positions = [int(pos.strip()) for pos in answer_check.split(',')[1:]]
