@@ -9,12 +9,12 @@ n = initLM(5)
 
 class Hangman():
 
-    def __init__(self):
+    def __init__(self, length):
         self.can_lie = True
         self.counter = 1
         self.letters_used = []
         
-        self.letters_left = len(self.secret)
+        self.letters_left = length
         self.progress = ["█"] * self.letters_left
 
         self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
