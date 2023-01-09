@@ -280,10 +280,10 @@ class Hangman():
             self.counter -= 1
         self.words = ''.join(self.progress).split(' ')
         for i in range(len(self.words)):
-            if "'" in word:
-                self.words[i] = ''.join(self.progress[:i] + [' '] + self.progress[i:]).split(' ')[0]
-                self.words.insert(i+1, ''.join(self.progress[:i] + [' '] + self.progress[i:]).split(' ')[1])
-            if "," in word:
+            if "'" in self.words[i]:
+                self.words[i] = ''.join(self.words[:i] + [' '] + self.words[i:]).split(' ')[0]
+                self.words.insert(i+1, ''.join(self.words[:i] + [' '] + self.words[i:]).split(' ')[1])
+            if "," in self.words[i]:
                 self.words[i] = self.words[i][:-1]
                 
         if self.progress[-1] in '.?!':
