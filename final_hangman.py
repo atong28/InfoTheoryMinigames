@@ -155,13 +155,13 @@ class Hangman():
         p /= sum(p)
         
         # cut off anything less than 0.01
-        p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
+        #p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
         # find sorted index
         index = p.argsort()[:][::-1]
         
         # re-normalize with the new truncated array
-        p /= sum(p)
+        #p /= sum(p)
         
         # define the new sorted, truncated arrays
         sorted_phrases = np.array(phrases, dtype=str)[index]
