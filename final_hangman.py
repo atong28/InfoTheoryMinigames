@@ -19,7 +19,17 @@ class Hangman():
 
         self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
         
-        self.make_move(" ")
+        self.make_move(" ", False)
+        self.make_move(",", False)
+        self.make_move("'", False)
+        for i in range(len(self.progress)):
+            if self.progress[i] == "'":
+                self.progress = self.progress[:i] + ' ' + self.progress[i:]
+        self.make_move(".", False)
+        if self.progress[-1] == "█":
+            self.make_move("?", False)
+            if self.progress[-1] == "█":
+                self.make_move("!", False)
         
         self.core_game_stage_one()
         
@@ -159,10 +169,10 @@ class Hangman():
                     self.counter += 1
                     # first one is a lie, second one was the truth, so give positions; else, if first was truth, do nothing
                     if answer_check == answer_final: 
-                        positions = [int(pos.strip()) for pos in answer_check.split(',')[1:]]
+                        positions = [int(pos.strip())-1 for pos in answer_check.split(',')[1:]]
                         self.progress_updater(guess, positions)
         elif answer[0] == 'Y':
-            positions = [int(pos.strip()) for pos in answer.split(',')[1:]]
+            positions = [int(pos.strip())-1 for pos in answer.split(',')[1:]]
             
             # if only 1 position, could be a lie; if 2+ positions, cannot be a lie
             if len(positions) == 1 and self.can_lie and can_lie:
@@ -175,7 +185,7 @@ class Hangman():
                     self.counter += 1
                     # first one is a lie, second one was the truth; else, if first was truth, positions is correct
                     if answer_check == answer_final: 
-                        positions = [int(pos.strip()) for pos in answer_check.split(',')[1:]]
+                        positions = [int(pos.strip())-1 for pos in answer_check.split(',')[1:]]
             
             self.progress_updater(guess, positions)
 

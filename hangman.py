@@ -19,18 +19,6 @@ class Hangman():
 
         self.order = ["e", "a", "r", "i", "o", "t", "n", "s"]
         
-        self.make_move(" ", False)
-        self.make_move(",", False)
-        self.make_move("'", False)
-        for i in range(len(self.progress)):
-            if self.progress[i] == "'":
-                self.progress = self.progress[:i] + ' ' + self.progress[i:]
-        self.make_move(".", False)
-        if self.progress[-1] == "█":
-            self.make_move("?", False)
-            if self.progress[-1] == "█":
-                self.make_move("!", False)
-        
         self.core_game_stage_one()
         
         self.core_game_stage_two()
