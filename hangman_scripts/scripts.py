@@ -2,6 +2,9 @@ import math
 from collections import defaultdict
 import numpy as np
 
+################################################################################
+# Checks if the given string matches the filter. █ represents wildcard char.   #
+################################################################################
 def matchesFilter(str, filter, used_letters):
     if len(str) != len(filter): return False
     
@@ -17,14 +20,15 @@ def matchesFilter(str, filter, used_letters):
         if filter[i] != str[i]: return False
     return True
 
+################################################################################
+# Returns a filtered list of all viable words given a wordlist and used chars. #
+################################################################################
 def getFilteredList(filter, wordlist, used_letters):
-    newFilteredList = [word for word in wordlist if matchesFilter(word, filter, used_letters)]
-
-    if len(newFilteredList) == 0:
-        return []
+    return [word for word in wordlist if matchesFilter(word, filter, used_letters)]
     
-    return newFilteredList
-
+################################################################################
+# Retrieves the entropy of a list. filtered_list is a probability array.       #
+################################################################################
 def getEntropy(filtered_list):
     entropy = 0
     total = 0
@@ -41,6 +45,9 @@ def getEntropy(filtered_list):
 
     return entropy
 
+################################################################################
+# Calculates the entropy of wordlist with respective probability array p.      #
+################################################################################
 def calculate(filter, wordlist, used_letters, p):
 
     # calculate the current entropy of all possible items

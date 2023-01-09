@@ -3,12 +3,29 @@ from collections import defaultdict
 import numpy as np
 from srilm import *
 
+################################################################################
+# Initialization.                                                              #
+# VOCAB: The list of available vocabulary.                                     #
+################################################################################
 VOCAB = defaultdict(lambda: [])
 np.set_printoptions(precision=3)
 n = initLM(5)
 
+################################################################################
+# Hangman Class                                                                #
+# ---------------------------------------------------------------------------- #
+# can_lie: True if a lie has not yet been spoken.                              #
+# counter: Stores the number of moves.                                         #
+# letters_used: Stores the letters used, including punctuation.                #
+# progress: List of characters in the phrase, with █ as the unknown character. #
+# order: A few preset letters that motivates stage one.                        #
+# fails: A list of phrases that have failed in guessing.                       #
+################################################################################
 class Hangman():
 
+    ############################################################################
+    # Initiates the game.                                                      #
+    ############################################################################
     def __init__(self, length):
         self.can_lie = True
         self.counter = 1
@@ -43,24 +60,31 @@ class Hangman():
         print(f"{colors.BOLD + colors.BLUE}Entering Stage 2...")
         self.core_game_stage_two()
     
+    ############################################################################
+    # Runs Stage 1 of the game.                                                #
+    # - Guesses letters in order until it is computationally viable to run     #
+    #   stage two.                                                             #
+    ############################################################################
     def core_game_stage_one(self):
         for letter in self.order:
             self.evaluate_available_words()
-            if sum([len(wordlist) for wordlist in self.viable]) < 50000:
+            if sum([len(wordlist) for wordlist in self.viable]) < 10000:
                 return
             print(f"{colors.BOLD + colors.BLUE}Current Phrase: " + (" ".join(self.progress)))
             self.make_move(letter)
     
+    ############################################################################
+    # Runs Stage 2 of the game.                                                #
+    # - Uses individual word entropy combined together to make guesses until   #
+    #   it is computationally viable to have lists of entire phrases to run    #
+    #   stage three.                                                           #
+    ############################################################################
     def core_game_stage_two(self):
-        
-        
         while self.letters_left > 0:
             print(f"{colors.BOLD + colors.BLUE}Current Phrase: " + (" ".join(self.progress)))
             self.evaluate_available_words()
             words = []
-            
             info_list = {}
-            
             total_combinations = 1
             
             for i in range(len(self.viable)):
@@ -68,29 +92,45 @@ class Hangman():
                 p = np.zeros((len(self.viable[i])), dtype=float)
                 for j in range(len(self.viable[i])):
                     p[j] = 10 ** getUnigramProb(n, self.viable[i][j])
+                # normalize it
                 p /= sum(p)
-
-                words += self.viable[i]
                 
+                words += self.viable[i]
+                # calculate probabilities per letter
                 new_list = scripts.calculate(self.words[i], self.viable[i], self.letters_used, p)
+                # merge dictionary together
                 info_list = {k: info_list.get(k, 0) + new_list.get(k, 0) for k in set(info_list) | set(new_list)}
                 
                 total_combinations *= len(self.viable[i])
             
+            # check for stage 3 viability
             if total_combinations < 2500000:
+                # if win, break the loop and finish
                 if self.core_game_stage_three():
                     break
+                # else continue
                 continue         
 
+            # find the best move in stage 2
             max_info_key = max(info_list, key=info_list.get)
 
+            # play the best move
             self.make_move(max_info_key)
                 
         print(f"Congrats! You win in {self.counter} moves.")
         
+    ############################################################################
+    # Runs Stage 3 of the game.                                                #
+    # - Bashes all possible combinations of words and retrieves their order 5  #
+    #   sentence probabilities. Normalizes the probabilities and only looks at #
+    #   the probabilities greater than 0.01. Does the same entropy calculation,#
+    #   but based on the entire phrase rather than individual words.           #
+    ############################################################################
     def core_game_stage_three(self):
         print(f"{colors.BOLD + colors.BLUE}Entering Stage 3...")
         phrases = []
+        
+        # generate list of phrases
         gen = self.generatePhrase(0)
         while True:
             try: 
@@ -98,52 +138,65 @@ class Hangman():
             except StopIteration:
                 break
             
+        # remove failed phrases from viability list
         for failed_phrase in self.fails:
             if failed_phrase in phrases:
                 phrases.remove(failed_phrase)
             
+        # create probability array
         p = np.zeros((len(phrases)), dtype=float)
             
         for i in range(len(phrases)):
             p[i] = 10 ** getSentenceProb(n, phrases[i], len(self.words))
             
+        # normalize probabilities
         p /= sum(p)
         
+        # cut off anything less than 0.01
         p = np.fromiter((x if x > 0.01 else 0 for x in p), dtype=p.dtype)
         
+        # find sorted index
         index = p.argsort()[:][::-1]
         
+        # re-normalize with the new truncated array
         p /= sum(p)
         
+        # define the new sorted, truncated arrays
         sorted_phrases = np.array(phrases, dtype=str)[index]
-        
         sorted_p = p[index]
-        
         d = {sorted_phrases[i]:sorted_p[i] for i in range(len(sorted_phrases)) if sorted_p[i] > 0}
         
+        # format for entropy calculation
         top_phrases = np.array(list(d.keys()), dtype=str)
-        
         top_probs = np.array(list(d.values()), dtype=float)
         
+        # calculate phrase entropy
         info_list = scripts.calculate(''.join(self.progress), list(top_phrases), self.letters_used, top_probs)
         
         print(f"{colors.BOLD + colors.BLUE}STAGE THREE | Most likely phrase is {phrases[index[0]]} with probability {p[index[0]]}.")
-
-        maxInfoKey = max(info_list, key=info_list.get)
         
+        # if phrase is 95% certain to be correct, guess it
         if p[index[0]] > 0.95:
             result = input(f"Guess #{self.counter} | Is the phrase '{phrases[index[0]]}'? ")
+            # correct guess
             if result == 'Y':
                 return True
+            # else, incorrect guess, add to failed phrases
             self.fails += [phrases[index[0]]]
             self.counter += 3
             return False
         
+        # find top letter choice
+        maxInfoKey = max(info_list, key=info_list.get)
+        
+        # make the best move
         self.make_move(maxInfoKey)
         
         return False
         
-        
+    ############################################################################
+    # Recursive phrase generator function for Stage 3                          #
+    ############################################################################
     def generatePhrase(self, depth, current=''):
         for word in self.viable[depth]:
             if depth == len(self.words) - 1:
@@ -151,13 +204,18 @@ class Hangman():
             else:
                 yield from self.generatePhrase(depth + 1, current + ' ' + word)
         
-
+    ############################################################################
+    # Finds all possible words sorted in format of the secret phrase           #
+    ############################################################################
     def evaluate_available_words(self):
         viable = []
         for word in self.words:
             viable.append(scripts.getFilteredList(word, VOCAB[str(len(word))], self.letters_used))
         self.viable = viable
 
+    ############################################################################
+    # Make the move by prompting the user                                      #
+    ############################################################################
     def make_move(self, guess, can_lie=True, custom_name=''):
 
         print(f'''Letters Guessed: "{'", "'.join(self.letters_used)}"''')
@@ -165,12 +223,14 @@ class Hangman():
         if custom_name:
             question = f"Guess #{self.counter}: Is there a {custom_name}?"
 
+        # Q1
         answer = input(question).strip()
         self.counter += 1
         
         self.letters_used += [guess]
         
         if answer == 'N':
+            # check for lie
             if self.can_lie and can_lie:
                 answer_check = input(question).strip()
                 self.counter += 1
@@ -221,16 +281,18 @@ class Hangman():
             self.letters_left -= 1
         return " ".join(self.progress)
     
-    
-
 if __name__ == '__main__':
     
     print(f"{colors.BOLD + colors.BLUE}Welcome to Hangman! Loading data...")
+    # Load vocabulary list
     for line in open('vocab.txt').readlines():
         word = line.strip()
         VOCAB[str(len(word))].append(word)
 
+    # Read language model --> set to 1e-5 pruned probabilities at order 5
     readLM(n, "bnc-pruned-3.lm")
     print(f"{colors.BOLD + colors.GREEN}Data loaded!")
+    
+    # Begin!
     length = int(input(f"How many characters are there in this phrase? ").strip())
     game = Hangman(length)

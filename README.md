@@ -62,3 +62,8 @@ From this point on, we will use the calculated bigram and unigram logprobs to ca
 
 Calculate probabilities with SRILM:
 ```ngram -lm bnc-pruned.lm -order 2 -ppl test.txt -debug 2```
+
+Using SWIG-SRILM wrapper, Python code does it as well:
+```getBigramProb(n, "this phrase")```
+```getUnigramProb(n, "phrase")```
+```getSentenceProb(n, "this is a sentence of length seven", 7)```
