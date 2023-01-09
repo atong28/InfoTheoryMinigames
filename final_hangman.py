@@ -165,7 +165,7 @@ class Hangman():
             positions = [int(pos.strip()) for pos in answer.split(',')[1:]]
             
             # if only 1 position, could be a lie; if 2+ positions, cannot be a lie
-            if len(positions == 1) and self.can_lie and can_lie:
+            if len(positions) == 1 and self.can_lie and can_lie:
                 answer_check = input(f"Guess #{self.counter}: Is there a {guess}?").strip()
                 self.counter += 1
                 # lie has occurred
