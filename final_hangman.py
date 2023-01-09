@@ -168,6 +168,8 @@ class Hangman():
         sorted_p = p[index]
         d = {sorted_phrases[i]:sorted_p[i] for i in range(len(sorted_phrases)) if sorted_p[i] > 0}
         
+        print(d)
+        
         # format for entropy calculation
         top_phrases = np.array(list(d.keys()), dtype=str)
         top_probs = np.array(list(d.values()), dtype=float)
