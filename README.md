@@ -1,5 +1,23 @@
 # Info Theory Semester 1 Project Code
 
+# Battleship
+
+## Approximation Method (Fast Computation)
+
+| Ship Size | No. Possible Locations |
+|-----------|------------------------|
+| 5         | 120                    |
+| 4         | 140                    |
+| 3         | 160                    |
+| 3         | 160                    |
+| 2         | 180                    |
+
+Our first estimate is simply the number of locations multiplied together, which comes out to the value `77,414,400,000`. But when concerned with non-possible overlapping states, the estimate becomes much less of that. Let's consider the case where there are only two ships, one of size 5 and one of size 4. Our first estimate would yield `120 * 140 = 16800` different cases, but we can quickly see that there are `40*42` ways to overlap in a 5x4 area, `2*60` ways to overlap in a 1x5, `2*50` ways to overlap in a 1x6, `2*40` ways to overlap in a 1x7, and `2*30` ways to overlap in a 1x8.
+
+Therefore, the true number of cases is actually `16800 - 2040 = 14760` cases.
+
+# Hangman
+
 ## Installing SRILM and Others
 
 ### Install Python 3.11
