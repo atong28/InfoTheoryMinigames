@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import unravel_index
-import lib.colors as bcolors
+from battleship_scripts import colors as bcolors
 
 ################################################################################
 # Evaluates the guess probability state.                                       #
@@ -152,22 +152,7 @@ class Battleship():
         else:
             print(f"{bcolors.BOLD + bcolors.BLUE}SEARCH MODE")   
 
-        i = (-self.board.probState).argsort(axis=None, kind='mergesort')
-        j = np.unravel_index(i, self.board.probState.shape)
-        sort = np.vstack(j).T
-
-        bestMove = sort[0]
-
-        if not self.board.hitMode:
-            for move in sort:
-                if self.board.probState[move[0],move[1]] == 0: break
-                if (move[0] + move[1]) % 2 == 0:
-                    bestMove = move
-                    break
-
-        
-
-        #bestMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
+        bestMove = unravel_index(self.board.probState.argmax(), self.board.probState.shape)
         print(f'Next best move at ({bestMove[0]},{bestMove[1]}).')
 
         # check for win
@@ -183,22 +168,8 @@ class Battleship():
         self.board.move(self.autoMove[0],self.autoMove[1])
         self.counter += 1
         
-        #nextMove = tuple(str(np.argmax(self.board.probState)).zfill(2))
-
-        i = (-self.board.probState).argsort(axis=None, kind='mergesort')
-        j = np.unravel_index(i, self.board.probState.shape)
-        sort = np.vstack(j).T
-
-        nextMove = sort[0]
-
-        if not self.board.hitMode:
-            for move in sort:
-                if self.board.probState[move[0],move[1]] == 0: break
-                if (move[0] + move[1]) % 2 == 0:
-                    nextMove = move
-                    break
-
-        self.autoMove = nextMove
+        nextMove = tuple(str(np.argmax(self.board.probState)).zfill(2))
+        self.autoMove = (int(nextMove[0]), int(nextMove[1]))
 
         # Check for win
         for ship in self.board.ships:
