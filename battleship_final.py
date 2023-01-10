@@ -64,17 +64,17 @@ class Battleship():
         return self.solution.run()
         
 ################################################################################
-# SOLUTION CLASS: 
+# SOLUTION CLASS:                                                              #
 # ---------------------------------------------------------------------------- #
-# CONSTANTS
-# - board: A Board object
-# - instances: Instances of solutions created when sunk
-# - remaining_ships: List of the sizes of remaining ships
-# - game_state: An array storing values of the board.
-#    - 0: not tried
-#    - 1: missed
-#    - 2: hit
-#    - 3: sunk
+# CONSTANTS                                                                    #
+# - board: A Board object                                                      #
+# - instances: Instances of solutions created when sunk                        #
+# - remaining_ships: List of the sizes of remaining ships                      #
+# - game_state: An array storing values of the board.                          #
+#    - 0: not tried                                                            #
+#    - 1: missed                                                               #
+#    - 2: hit                                                                  #
+#    - 3: sunk                                                                 #
 ################################################################################
 class Solution():
     
@@ -92,6 +92,7 @@ class Solution():
         self.ships_sunk = 0
         
     def get_total_states(self):
+        # should implement summing all instance states together as well
         total = 1
         for ship_size in self.remaining_ships:
             counter = 0
@@ -198,6 +199,10 @@ class Solution():
                                 game_state[x, coord[1]+coord[1]+ship_size] = 3
                         self.instances.append(Solution(self.board, game_state, remaining_ships))
     
+        # should return number of possible cases remaining
+        # if 0, collapse instance and return back to previous nested instance to recompute values
+        # if the instance wins, return -1; indicates win has occurred and no changes may happen; terminate game
+        # if more than 0; game continues on and we weigh the total probabilities in method run()
     def check_win(self):
         return self.ships_sunk == 5
     
