@@ -3,9 +3,10 @@ from numpy import unravel_index
 from battleship_scripts import colors
 import copy
 from collections import defaultdict
+from pandas import *
 
 BOARD_SIZE = 10
-DEFAULT_SHIP_SIZES = [5,4,3,3,2]
+DEFAULT_SHIP_SIZES = [5,4]
 
 # returns true if in bounds
 def check_bounds(coordinate):
@@ -87,11 +88,52 @@ class Solution():
         self.instances = defaultdict(lambda: 0)
         self.remaining_ships = remaining_ships
         self.game_state = game_state
-        self.total_states = self.get_total_states()
         self.move_count = 0
-        self.eval_on = False
+        self.eval_on = True
         self.ships_sunk = 0
         self.instance_depth = instance_depth
+        
+    def clean_instances(self):
+        for k in list(self.instances.keys()):
+            if self.instances[k] == 0:
+                print(f"Eliminating instance at depth {k.instance_depth} with 0 possibilities; ships left {k.remaining_ships}")
+                print(f"Eliminated instance has game board")
+                print(DataFrame(k.game_state))
+                del self.instances[k]
+
+        # if there is only 1 viable instance left, collapse the instance
+        if len(self.instances) == 1:
+            instance = self.instances.popitem()[0]
+            print(f"Collapsing instance because only 1 possibility remains at depth {self.instance_depth}")
+            print(f"Collapsed instance has game board")
+            print(DataFrame(instance.game_state))
+            # collect the true ship size that was sunk in this instance
+            ship_size = [s for s in self.remaining_ships if s not in instance.remaining_ships][0]
+            print(f"Ship of size {ship_size} collapsed")
+            self.remaining_ships.remove(ship_size)
+            
+            coord_border = np.add(np.multiply(self.sunken_dir, ship_size-1), self.sunken_start)
+                    
+            x, y = self.sunken_start
+
+            # finalize sunken game state
+            match self.sunken_dir:
+                case (-1, 0):
+                    self.game_state[coord_border[0]:coord_border[0]+ship_size, y] = 3
+                case (0, -1):
+                    self.game_state[x, coord_border[1]:coord_border[1]+ship_size] = 3
+                case (1, 0):
+                    self.game_state[x:x+ship_size, y] = 3
+                case (0, 1):
+                    self.game_state[x, y:y+ship_size] = 3
+
+            print(f"Confirmed the size {ship_size} of ship sinking {self.sunken_start} facing {self.sunken_dir} at instance depth {self.instance_depth}")
+
+            # if the instance contains subinstances, add it back into here
+            # do not update instance depth; this accounts for ships left
+            if instance.instances_created():
+                for subinstance, poss in instance.instances.items():
+                    self.instances[subinstance] = poss
         
     def get_total_states(self):
         # if instances are created, total is the sum of all of them
@@ -101,38 +143,39 @@ class Solution():
         # if hit mode, cover with ghost ship and recursively generate cases
         if self.in_hit_mode():
             # impossible case; cannot still have hit points and have all ships sunk
-            if self.instance_depth == 5:
+            if self.instance_depth == len(DEFAULT_SHIP_SIZES):
                 return 0
             total = 0
             for ship_size in self.remaining_ships:
                 for pos in range(BOARD_SIZE):
-                    for len in range(BOARD_SIZE - ship_size + 1):
+                    for length in range(BOARD_SIZE - ship_size + 1):
                         # if the ship collides with missing or sunk, then it is not a valid location
-                        if any(value in (1, 3) for value in self.game_state[pos,len:len+ship_size]): pass
+                        if any(value in (1, 3) for value in self.game_state[pos,length:length+ship_size]): pass
                         # if it collides with hit point, it is a valid location
-                        elif any(value == 2 for value in self.game_state[pos,len:len+ship_size]):
+                        elif any(value == 2 for value in self.game_state[pos,length:length+ship_size]):
                             game_state = copy.deepcopy(self.game_state)
                             remaining_ships = copy.deepcopy(self.remaining_ships)
                             board = copy.deepcopy(self.board)
                             remaining_ships.remove(ship_size)
-                            # find every point that contains a hit point and temp set as sunk
-                            for i in range(ship_size):
-                                if self.game_state[pos, len + i] == 2:
-                                    game_state[pos, len + i] == 3
+                            # find every point in the ship and temp set as sunk
+                            game_state[pos, length:length + ship_size] = 3
                             # find total states of a ghost solution instance with depth+1, add to the total
-                            total += Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
+                            weight = Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
+                            print(f"Found total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
+                            total += weight
                             
                         # do the same for the other orientation
-                        if any(value in (0, 2) for value in self.game_state[len:len+ship_size,pos]): pass
-                        elif any(value == 2 for value in self.game_state[len:len+ship_size,pos]):
+                        if any(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]): pass
+                        elif any(value == 2 for value in self.game_state[length:length+ship_size,pos]):
                             game_state = copy.deepcopy(self.game_state)
                             remaining_ships = copy.deepcopy(self.remaining_ships)
                             board = copy.deepcopy(self.board)
                             remaining_ships.remove(ship_size)
-                            for i in range(ship_size):
-                                if self.game_state[len + i, pos] == 2:
-                                    game_state[len + i, pos] == 3
-                            total += Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
+                            game_state[length:length + ship_size, pos] = 3
+                            weight = Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
+                            print(f"Found total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
+                            total += weight
+            print(f"Total outcomes at depth {self.instance_depth} became {total}")
             return total
 
         total = 1
@@ -140,11 +183,12 @@ class Solution():
         for ship_size in self.remaining_ships:
             counter = 0
             for pos in range(BOARD_SIZE):
-                for len in range(BOARD_SIZE - ship_size + 1):
+                for length in range(BOARD_SIZE - ship_size + 1):
                     # if the ship only collides with hit or not tried, then it is valid location
-                    if all(value in (0, 2) for value in self.game_state[pos,len:len+ship_size]): counter += 1
-                    if all(value in (0, 2) for value in self.game_state[len:len+ship_size,pos]): counter += 1
+                    if all(value in (0, 2) for value in self.game_state[pos,length:length+ship_size]): counter += 1
+                    if all(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]): counter += 1
             total *= counter
+        print(f"Total outcomes at depth (shallow) {self.instance_depth} became {total}")
         return total
     
     def run(self):
@@ -161,19 +205,26 @@ class Solution():
             p = self.eval_state()
             best_move = unravel_index(p.argmax(), p.shape)
             
+            print(f"Depth {self.instance_depth} | Executing best move {best_move}.")
+            print("Probability Matrix:")
+            print(DataFrame(p))
+            
             # execute move
             self.move(best_move)
             
         return self.move_count
         
     def eval_state(self):
+        # remove any non-needed instances
+        self.clean_instances()
+
         unfound_hit_points = sum(self.remaining_ships) - np.count_nonzero(self.game_state == 2)
 
         p = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=float)
 
         # if there are instances, iterate through all and sum together
         if self.instances_created():
-            w = np.array(list(self.instances.values()))
+            w = np.array(list(self.instances.values()), dtype=float)
             
             # normalize probability
             w /= sum(w)
@@ -185,54 +236,68 @@ class Solution():
                 p += weights[instance] * instance.eval_state()
             
             # return finalized normalized probabilities
-            return p / sum(p) * unfound_hit_points
+            return p / sum(sum(p)) * unfound_hit_points
         
-        # if in hit mode, only consider the combinations of ships that overlap a hit point
-        if self.in_hit_mode():
-            pass
-
         for ship_size in self.remaining_ships:
             for pos in range(BOARD_SIZE):
-                for len in range(BOARD_SIZE - ship_size + 1):
+                for length in range(BOARD_SIZE - ship_size + 1):
                     # if the ship only collides with hit or not tried, then it is valid location; increment 1 at each location
-                    if all(value in (0, 2) for value in self.game_state[pos,len:len+ship_size]):
-                        p[pos, len:len+ship_size] += 1
-                    if all(value in (0, 2) for value in self.game_state[len:len+ship_size,pos]):
-                        p[len:len+ship_size, pos] += 1
+                    if all(value in (0, 2) for value in self.game_state[pos,length:length+ship_size]):
+                        # grant heavy weighting based on how many hit points it passes through + 1 for general
+                        p[pos, length:length+ship_size] += 50 * sum(self.game_state[pos,length:length+ship_size]) + 1
+                    if all(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]):
+                        p[length:length+ship_size, pos] += 50 * sum(self.game_state[length:length+ship_size,pos]) + 1
+
+        # any already hit points cannot be hit again; setting point to 0             
+        locations = np.where(self.game_state == 2)
+        p[locations] = 0
+
         # return normalized matrix
-        return p / sum(p) * unfound_hit_points
+        return p / sum(sum(p)) * unfound_hit_points
     
-    def move(self, move, result):
+    def move(self, move, result=''):
+
+        input(f"Depth {self.instance_depth} | Executing move {move} with result {result}, has instance: {self.instances_created()}")
+
+        self.clean_instances()
 
         # if depth is exceeded and there are still hit points, the instance creation is impossible
-        if self.instance_depth == 5 and self.in_hit_mode():
+        if self.instance_depth == len(DEFAULT_SHIP_SIZES) and self.in_hit_mode():
             return 0
 
         x = move[0]
         y = move[1]
         
-        # when done manually, this is replaced with input function
-        result = self.board.move(x, y)
-        print(f"Result: {result}")
+        if not result:
+            # when done manually, this is replaced with input function
+            result = self.board.move(x, y)
+            print(f"Result: {result}")
 
         # result must be applied to all instances. if no instances, this part is skipped
-        for instance, total_cases in self.instances.values():
+        
+        for instance, total_cases in self.instances.items():
+            print(f"Applying result to instance of depth {instance.instance_depth} with total cases {total_cases}")
             if total_cases == 0: continue
-            result = instance.move(move, result)
+            results = instance.move(move, result)
             # win has occurred
-            if result == -1:
+            if results == -1:
                 # collapse own instance until at top level
                 return -1
             else:
-                self.instances[instance] = result
+                self.instances[instance] = results
         
+        if self.instances_created(): return sum(self.instances.values())
         match result:
             case 'M':
+                print(f"Updating miss at depth {self.instance_depth} at location {x}, {y}")
                 self.game_state[x, y] = 1
             case 'H':
+                print(f"Updating hit at depth {self.instance_depth} at location {x}, {y}")
                 self.game_state[x, y] = 2
             case 'S':
+                print(f"Updating sunk at depth {self.instance_depth} at location {x}, {y}")
                 self.ships_sunk += 1
+                self.game_state[x, y] = 3
 
                 # check for win
                 if self.check_win():
@@ -240,38 +305,46 @@ class Solution():
                     return -1
 
                 # search for squares next to it that are hit but not sunk
-                for dir in ((-1, 0), (0, -1), (1, 0), (0, 1)):
-                    coord = np.add(dir, move)
+                for direction in ((-1, 0), (0, -1), (1, 0), (0, 1)):
+                    coord = np.add(direction, move)
                     if check_bounds(coord) and self.game_state[coord[0], coord[1]] == 2:
                         break
+                # it may be possible that sink occurs at junction; in this case, move up before break statement and delete break statement
                 for ship_size in self.remaining_ships:
-                    coord_border = np.add(np.multiply(dir, ship_size-1), move)
+                    coord_border = np.add(np.multiply(direction, ship_size-1), move)
                     # valid ship orientation
                     if check_bounds(coord_border) and self.game_state[coord_border[0], coord_border[1]] == 2:
                         board = copy.deepcopy(self.board)
                         game_state = copy.deepcopy(self.game_state)
                         remaining_ships = copy.deepcopy(self.remaining_ships)
                         remaining_ships.remove(ship_size)
-                        match dir:
+                        match direction:
                             case (-1, 0):
                                 game_state[coord_border[0]:coord_border[0]+ship_size, y] = 3
-                                
                             case (0, -1):
                                 game_state[x, coord_border[1]:coord_border[1]+ship_size] = 3
                             case (1, 0):
-                                game_state[coord[0]:coord[0]+ship_size, y] = 3
+                                game_state[x:x+ship_size, y] = 3
                             case (0, 1):
-                                game_state[x, coord[1]+coord[1]+ship_size] = 3
-                        self.instances.append(Solution(board, game_state, remaining_ships))
+                                game_state[x, y:y+ship_size] = 3
+                        print(f"Creating new instance at depth {self.instance_depth + 1} with remaining ships {remaining_ships}")
+                        instance = Solution(board, game_state, remaining_ships, self.instance_depth + 1)
+                        self.instances[instance] = instance.get_total_states()
+
+                        self.sunken_start = move
+                        self.sunken_dir = direction
                 # if no new instances are created, it must be impossible state
                 if len(self.instances) == 0:
                     return 0
-    
+                self.clean_instances()
+        print(f"Instance Board (after):")
+        print(DataFrame(self.game_state))
+
         total_states = self.get_total_states()
         return total_states
-    
+
     def check_win(self):
-        return self.ships_sunk == 5
+        return self.ships_sunk == len(DEFAULT_SHIP_SIZES)
     
     def instances_created(self):
         return len(self.instances) > 1
