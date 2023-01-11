@@ -7,8 +7,6 @@ from pandas import *
 
 BOARD_SIZE = 10
 DEFAULT_SHIP_SIZES = [5, 4, 3, 3, 2]
-GAME_BOARD = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
-TOTAL_INSTANCES = {}
 COL_REPRESENTATION = "ABCDEFGHIJ"
 
 # returns true if in bounds
@@ -69,12 +67,43 @@ class Battleship():
     def __init__(self, generate_random, games=3):
         self.board = Board(generate_random)
         self.solution = Solution(self.board)
-        TOTAL_INSTANCES[str(self.solution.id)] = self.solution
+        global TOTAL_INSTANCES
+        global GAME_BOARD 
         GAME_BOARD = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
+        TOTAL_INSTANCES = {}
+
+        TOTAL_INSTANCES[str(self.solution.id)] = self.solution
         self.results = np.zeros(100, dtype=int)
         self.rounds = games
+
+        for i in range(self.rounds):
+            print(f"{colors.CYAN}Run {i} completed.")
+            result = self.playAuto()
+            self.results[result] += 1
+            self.board.reset()
+            self.board.generate()
+            self.solution = Solution(self.board)
+            GAME_BOARD = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
+            TOTAL_INSTANCES = {}
+            TOTAL_INSTANCES[str(self.solution.id)] = self.solution
         
-        result = self.playAuto()
+        # analyze stats
+        expectedMoves = 0
+        print(f"{colors.BLUE + colors.BOLD}In {self.rounds} simulations, here is the distribution of game moves:")
+        for i in range(100):
+            if self.results[i] == 0: continue
+            print(f"{colors.GREEN}{i} moves: {self.results[i]} game(s)")
+            expectedMoves += i * self.results[i] / self.rounds
+            
+        print(f"{colors.BLUE + colors.BOLD}The number of mean moves was {colors.YELLOW}{expectedMoves}.")
+        
+        # print for google sheets formatting
+        printSheet = ""
+        while (len(printSheet) != 1) and (printSheet != "y" and printSheet != "n"):
+            printSheet = str.lower(input(f"{colors.BLUE + colors.BOLD}Would you like to print the list for spreadsheet formatting? Press Y for yes, N for no. First starts at 0. "))
+        if printSheet == "y":
+            for i in range(100):
+                print(self.results[i])
             
         print(f"{colors.BLUE + colors.BOLD}The number of moves was {colors.YELLOW}{result}.")
 
@@ -126,7 +155,7 @@ class Solution():
         if len(self.instances) == 1:
             instance = self.instances.popitem()[0]
             del TOTAL_INSTANCES[str(instance.id)]
-            print(f"ID: {self.id} | Collapsing instance id {instance.id} because only 1 possibility remains at depth {self.instance_depth}")
+            #print(f"ID: {self.id} | Collapsing instance id {instance.id} because only 1 possibility remains at depth {self.instance_depth}")
             #print(f"ID: {self.id} | Collapsed instance has game board")
             #print(DataFrame(instance.game_state))
             
@@ -136,7 +165,7 @@ class Solution():
             self.remaining_ships = instance.remaining_ships
             self.game_state = instance.game_state
 
-            print(f"ID: {self.id} | Ship confirmed sunk of size {ship_size} facing {self.sunken_dir} starting from {self.sunken_start} | Remaining ships {self.remaining_ships} at instance depth {self.instance_depth}")
+            #print(f"ID: {self.id} | Ship confirmed sunk of size {ship_size} facing {self.sunken_dir} starting from {self.sunken_start} | Remaining ships {self.remaining_ships} at instance depth {self.instance_depth}")
 
             # add to confirmed ships to check with other instances
             self.confirmed_ships.add((self.sunken_start, self.sunken_dir, ship_size))
@@ -211,11 +240,11 @@ class Solution():
             best_move = unravel_index(p.argmax(), p.shape)
             
             print(f"Move #{self.move_count} | ID: {self.id} | Depth {self.instance_depth} | Executing best move {best_move}.")
-            print(f"ID: {self.id} | Probability Matrix:")
+            #print(f"ID: {self.id} | Probability Matrix:")
             print(DataFrame(p))
-            print(f"ID: {self.id} | Board State:")
+            #print(f"ID: {self.id} | Board State:")
             print(DataFrame(GAME_BOARD))
-            print_board()
+            #print_board()
             
             # execute move; check for win
             if self.move(best_move) == -1:
@@ -266,8 +295,8 @@ class Solution():
     
     def move(self, move, result=''):
 
-        if self.instance_depth == 0:
-            input(f"ID: {self.id} | Depth {self.instance_depth} | Executing move {move} with result {result}, has instance: {self.instances_created()}")
+        #if self.instance_depth == 0:
+            #print(f"ID: {self.id} | Depth {self.instance_depth} | Executing move {move} with result {result}, has instance: {self.instances_created()}")
 
         self.clean_instances()
 
@@ -280,22 +309,22 @@ class Solution():
         
         if not result:
             # when done manually, this is replaced with input function
-            #result = self.board.move(x, y)
-            result = input(f'Shot #{self.move_count}: Coordinate ({COL_REPRESENTATION[y]}, {x + 1})')
-            print(f"Result: {result}")
+            result = self.board.move(x, y)
+            #result = input(f'Shot #{self.move_count}: Coordinate ({y + 1}, {x + 1})')
+            #print(f"Result: {result}")
 
         if self.instance_depth == 0:
             match result:
                 case 'M':
                     GAME_BOARD[x, y] = 1
-                    print(colors.CYAN)
+                    #print(colors.CYAN)
                 case 'H':
                     GAME_BOARD[x, y] = 2
-                    print(colors.GREEN)
+                    #print(colors.GREEN)
                 case 'S':
                     GAME_BOARD[x, y] = 3
                     self.ships_sunk += 1
-                    print(colors.YELLOW)
+                    #print(colors.YELLOW)
                     
         if self.check_win():
             return -1
@@ -537,7 +566,7 @@ if __name__ == '__main__':
     gen = ""
     generateRandom = True
     manualMode = True
-    numRounds = 1
+    numRounds = 3
 
     # run it!
     run(numRounds)
