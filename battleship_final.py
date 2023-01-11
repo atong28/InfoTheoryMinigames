@@ -567,4 +567,4 @@ if __name__ == '__main__':
         generateRandom = True
 
     # run it!
-    run(1)
+    run(100)
