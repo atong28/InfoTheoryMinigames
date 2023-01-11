@@ -6,11 +6,52 @@ from collections import defaultdict
 from pandas import *
 
 BOARD_SIZE = 10
-DEFAULT_SHIP_SIZES = [5,4]
+DEFAULT_SHIP_SIZES = [5, 4, 3, 3, 2]
+GAME_BOARD = np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int)
+TOTAL_INSTANCES = {}
+COL_REPRESENTATION = "ABCDEFGHIJ"
 
 # returns true if in bounds
 def check_bounds(coordinate):
     return 0 <= coordinate[0] < BOARD_SIZE and 0 <= coordinate[1] < BOARD_SIZE
+
+def merge_ship_instances(start='1'):
+    main = TOTAL_INSTANCES[start]
+    if start not in TOTAL_INSTANCES.keys():
+        return
+    ids = [i_id for i_id in TOTAL_INSTANCES.keys() if (i_id.startswith(start) and len(i_id) == len(start) + 1)]
+    if ids:
+        for i_id in ids:
+            merge_ship_instances(i_id)
+        results = set(TOTAL_INSTANCES[ids[0]].confirmed_ships)
+        for i_id in ids[1:]:
+            results.intersection_update(TOTAL_INSTANCES[i_id].confirmed_ships)
+        if results:
+            print(f"Merging ships upon agreed-instances at depth {len(start)-1}, instance id {start} now has addtl. confirmed ship(s) {results}")
+            for ship in results:
+                main.confirmed_ships.add(ship)
+                start, direction, ship_size = ship
+                x, y = start
+                match direction:
+                    case (-1, 0):
+                        main.game_state[x-ship_size+1:x+1, y] = 3
+                        if start=='1': GAME_BOARD[x-ship_size+1:x+1, y] = 3
+                    case (0, -1):
+                        main.game_state[x, y-ship_size+1:y+1] = 3
+                        if start=='1': GAME_BOARD[x, y-ship_size+1:y+1] = 3
+                    case (1, 0):
+                        main.game_state[x:x+ship_size, y] = 3
+                        if start=='1': GAME_BOARD[x:x+ship_size, y] = 3
+                    case (0, 1):
+                        main.game_state[x, y:y+ship_size] = 3
+                        if start=='1': GAME_BOARD[x, y:y+ship_size] = 3
+
+def print_board():
+        string = 'INSTANCE STRUCTURE\n'
+        for id in sorted(list(TOTAL_INSTANCES.keys())):
+            string += '-' * len(id) + f'> {id} (CONFIRMED SINKS: {TOTAL_INSTANCES[str(id)].confirmed_ships})\n'
+        string += f'TOTAL SHIPS SUNK: {TOTAL_INSTANCES["1"].ships_sunk}'
+        print(string)
 
 ################################################################################
 # BATTLESHIP CLASS: Runs the game.                                             #
@@ -28,43 +69,20 @@ class Battleship():
     def __init__(self, generate_random, games=1):
         self.board = Board(generate_random)
         self.solution = Solution(self.board)
+        TOTAL_INSTANCES[str(self.solution.id)] = self.solution
         self.results = np.zeros(100, dtype=int)
         self.rounds = games
         
         result = self.playAuto()
         
         print(f"It took {result} moves to complete the game.")
-        
-        '''for i in range(self.rounds):
-            if i % 100 == 0: print(f"{bcolors.CYAN}Run {i} completed.")
-            num_moves = self.playAuto()
-            self.results[num_moves] += 1
-            self.board = Board(generate_random)
-        
-        # analyze stats
-        expectedMoves = 0
-        print(f"{bcolors.BLUE + bcolors.BOLD}In {self.rounds} simulations, here is the distribution of game moves:")
-        for i in range(100):
-            if self.results[i] == 0: continue
-            print(f"{bcolors.GREEN}{i} moves: {self.results[i]} game(s)")
-            expectedMoves += i * self.results[i] / self.rounds
-            
-        print(f"{bcolors.BLUE + bcolors.BOLD}The number of mean moves was {bcolors.YELLOW}{expectedMoves}.")
-        
-        # print for google sheets formatting
-        printSheet = ""
-        while (len(printSheet) != 1) and (printSheet != "y" and printSheet != "n"):
-            printSheet = str.lower(input(f"{bcolors.BLUE + bcolors.BOLD}Would you like to print the list for spreadsheet formatting? Press Y for yes, N for no. First starts at 0. "))
-        if printSheet == "y":
-            for i in range(100):
-                print(self.results[i])'''
 
     ############################################################################
     # Plays one game in auto mode.                                             #
     ############################################################################
     def playAuto(self):
         return self.solution.run()
-        
+    
 ################################################################################
 # SOLUTION CLASS:                                                              #
 # ---------------------------------------------------------------------------- #
@@ -83,59 +101,55 @@ class Solution():
     ############################################################################
     # Initiates the solution instance.                                         #
     ############################################################################
-    def __init__(self, board, game_state=np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int), remaining_ships=DEFAULT_SHIP_SIZES, instance_depth=0):
+    def __init__(self, board, game_state=np.zeros((BOARD_SIZE, BOARD_SIZE), dtype=int), remaining_ships=DEFAULT_SHIP_SIZES, instance_depth=0, id=1):
         self.board = board
         self.instances = defaultdict(lambda: 0)
+        self.id = id
         self.remaining_ships = remaining_ships
         self.game_state = game_state
         self.move_count = 0
         self.eval_on = True
         self.ships_sunk = 0
         self.instance_depth = instance_depth
+        self.confirmed_ships = set()
         
     def clean_instances(self):
         for k in list(self.instances.keys()):
             if self.instances[k] == 0:
-                print(f"Eliminating instance at depth {k.instance_depth} with 0 possibilities; ships left {k.remaining_ships}")
-                print(f"Eliminated instance has game board")
-                print(DataFrame(k.game_state))
+                for i_id in list(TOTAL_INSTANCES.keys()):
+                    if i_id.startswith(str(k.id)):
+                        del TOTAL_INSTANCES[i_id]
                 del self.instances[k]
 
         # if there is only 1 viable instance left, collapse the instance
         if len(self.instances) == 1:
             instance = self.instances.popitem()[0]
-            print(f"Collapsing instance because only 1 possibility remains at depth {self.instance_depth}")
-            print(f"Collapsed instance has game board")
+            del TOTAL_INSTANCES[str(instance.id)]
+            print(f"ID: {self.id} | Collapsing instance id {instance.id} because only 1 possibility remains at depth {self.instance_depth}")
+            print(f"ID: {self.id} | Collapsed instance has game board")
             print(DataFrame(instance.game_state))
+            
             # collect the true ship size that was sunk in this instance
             ship_size = [s for s in self.remaining_ships if s not in instance.remaining_ships][0]
-            print(f"Ship of size {ship_size} collapsed")
-            self.remaining_ships.remove(ship_size)
             
-            coord_border = np.add(np.multiply(self.sunken_dir, ship_size-1), self.sunken_start)
-                    
-            x, y = self.sunken_start
+            self.remaining_ships = instance.remaining_ships
+            self.game_state = instance.game_state
 
-            # finalize sunken game state
-            match self.sunken_dir:
-                case (-1, 0):
-                    self.game_state[coord_border[0]:coord_border[0]+ship_size, y] = 3
-                case (0, -1):
-                    self.game_state[x, coord_border[1]:coord_border[1]+ship_size] = 3
-                case (1, 0):
-                    self.game_state[x:x+ship_size, y] = 3
-                case (0, 1):
-                    self.game_state[x, y:y+ship_size] = 3
+            print(f"ID: {self.id} | Ship confirmed sunk of size {ship_size} facing {self.sunken_dir} starting from {self.sunken_start} | Remaining ships {self.remaining_ships} at instance depth {self.instance_depth}")
 
-            print(f"Confirmed the size {ship_size} of ship sinking {self.sunken_start} facing {self.sunken_dir} at instance depth {self.instance_depth}")
+            # add to confirmed ships to check with other instances
+            self.confirmed_ships.add((self.sunken_start, self.sunken_dir, ship_size))
 
             # if the instance contains subinstances, add it back into here
             # do not update instance depth; this accounts for ships left
             if instance.instances_created():
                 for subinstance, poss in instance.instances.items():
                     self.instances[subinstance] = poss
+                    
+        merge_ship_instances()
         
     def get_total_states(self):
+        #print(f"Finding total number of states at depth {self.instance_depth}")
         # if instances are created, total is the sum of all of them
         if self.instances_created():
             return sum(self.instances.values())
@@ -161,11 +175,11 @@ class Solution():
                             game_state[pos, length:length + ship_size] = 3
                             # find total states of a ghost solution instance with depth+1, add to the total
                             weight = Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
-                            print(f"Found total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
+                            #print(f"Found (h) total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
                             total += weight
                             
                         # do the same for the other orientation
-                        if any(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]): pass
+                        if any(value in (1, 3) for value in self.game_state[length:length+ship_size,pos]): pass
                         elif any(value == 2 for value in self.game_state[length:length+ship_size,pos]):
                             game_state = copy.deepcopy(self.game_state)
                             remaining_ships = copy.deepcopy(self.remaining_ships)
@@ -173,9 +187,9 @@ class Solution():
                             remaining_ships.remove(ship_size)
                             game_state[length:length + ship_size, pos] = 3
                             weight = Solution(board, game_state, remaining_ships, self.instance_depth + 1).get_total_states()
-                            print(f"Found total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
+                            #print(f"Found (v) total states with remaining ships {remaining_ships} at depth {self.instance_depth} to be {weight}")
                             total += weight
-            print(f"Total outcomes at depth {self.instance_depth} became {total}")
+            #print(f"Total outcomes at depth {self.instance_depth} became {total}")
             return total
 
         total = 1
@@ -185,32 +199,31 @@ class Solution():
             for pos in range(BOARD_SIZE):
                 for length in range(BOARD_SIZE - ship_size + 1):
                     # if the ship only collides with hit or not tried, then it is valid location
-                    if all(value in (0, 2) for value in self.game_state[pos,length:length+ship_size]): counter += 1
-                    if all(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]): counter += 1
+                    if all(value in (0, 2) for value in self.game_state[pos,length:length+ship_size]): 
+                        counter += 1
+                    if all(value in (0, 2) for value in self.game_state[length:length+ship_size,pos]): 
+                        counter += 1
             total *= counter
-        print(f"Total outcomes at depth (shallow) {self.instance_depth} became {total}")
+        #print(f"Total outcomes at depth (shallow) {self.instance_depth} became {total}")
         return total
     
     def run(self):
         while not self.check_win():
             self.move_count += 1
             
-            # manual debug without eval
-            if not self.eval_on:
-                print(self.board)
-                move = tuple(map(int, input("Enter row, col [format = x y]: ").split(' ')))
-                self.move(move)
-                continue
-            
             p = self.eval_state()
             best_move = unravel_index(p.argmax(), p.shape)
             
-            print(f"Depth {self.instance_depth} | Executing best move {best_move}.")
-            print("Probability Matrix:")
+            print(f"Move #{self.move_count} | ID: {self.id} | Depth {self.instance_depth} | Executing best move {best_move}.")
+            print(f"ID: {self.id} | Probability Matrix:")
             print(DataFrame(p))
+            print(f"ID: {self.id} | Board State:")
+            print(DataFrame(GAME_BOARD))
+            print_board()
             
-            # execute move
-            self.move(best_move)
+            # execute move; check for win
+            if self.move(best_move) == -1:
+                return self.move_count
             
         return self.move_count
         
@@ -257,7 +270,8 @@ class Solution():
     
     def move(self, move, result=''):
 
-        input(f"Depth {self.instance_depth} | Executing move {move} with result {result}, has instance: {self.instances_created()}")
+        if self.instance_depth == 0:
+            print(f"ID: {self.id} | Depth {self.instance_depth} | Executing move {move} with result {result}, has instance: {self.instances_created()}")
 
         self.clean_instances()
 
@@ -270,39 +284,39 @@ class Solution():
         
         if not result:
             # when done manually, this is replaced with input function
-            result = self.board.move(x, y)
+            #result = self.board.move(x, y)
+            result = input(f'Shot #{self.move_count}: Coordinate ({COL_REPRESENTATION[y]}, {x + 1})')
             print(f"Result: {result}")
 
+        if self.instance_depth == 0:
+            match result:
+                case 'M':
+                    GAME_BOARD[x, y] = 1
+                    print(colors.CYAN)
+                case 'H':
+                    GAME_BOARD[x, y] = 2
+                    print(colors.GREEN)
+                case 'S':
+                    GAME_BOARD[x, y] = 3
+                    self.ships_sunk += 1
+                    print(colors.YELLOW)
+                    
+        if self.check_win():
+            return -1
+
         # result must be applied to all instances. if no instances, this part is skipped
-        
         for instance, total_cases in self.instances.items():
-            print(f"Applying result to instance of depth {instance.instance_depth} with total cases {total_cases}")
             if total_cases == 0: continue
-            results = instance.move(move, result)
-            # win has occurred
-            if results == -1:
-                # collapse own instance until at top level
-                return -1
-            else:
-                self.instances[instance] = results
+            self.instances[instance] = instance.move(move, result)
         
         if self.instances_created(): return sum(self.instances.values())
         match result:
             case 'M':
-                print(f"Updating miss at depth {self.instance_depth} at location {x}, {y}")
                 self.game_state[x, y] = 1
             case 'H':
-                print(f"Updating hit at depth {self.instance_depth} at location {x}, {y}")
                 self.game_state[x, y] = 2
             case 'S':
-                print(f"Updating sunk at depth {self.instance_depth} at location {x}, {y}")
-                self.ships_sunk += 1
                 self.game_state[x, y] = 3
-
-                # check for win
-                if self.check_win():
-                    # signal win has occurred
-                    return -1
 
                 # search for squares next to it that are hit but not sunk
                 for direction in ((-1, 0), (0, -1), (1, 0), (0, 1)):
@@ -327,9 +341,11 @@ class Solution():
                                 game_state[x:x+ship_size, y] = 3
                             case (0, 1):
                                 game_state[x, y:y+ship_size] = 3
-                        print(f"Creating new instance at depth {self.instance_depth + 1} with remaining ships {remaining_ships}")
-                        instance = Solution(board, game_state, remaining_ships, self.instance_depth + 1)
+                        # print(f"ID: {self.id} | Creating new instance at depth {self.instance_depth + 1} with remaining ships {remaining_ships}")
+                        id = self.id * 10 + len(self.instances) + 1
+                        instance = Solution(board, game_state, remaining_ships, self.instance_depth + 1, id)
                         self.instances[instance] = instance.get_total_states()
+                        TOTAL_INSTANCES[str(id)] = instance
 
                         self.sunken_start = move
                         self.sunken_dir = direction
@@ -337,8 +353,6 @@ class Solution():
                 if len(self.instances) == 0:
                     return 0
                 self.clean_instances()
-        print(f"Instance Board (after):")
-        print(DataFrame(self.game_state))
 
         total_states = self.get_total_states()
         return total_states
